@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml"><link rel="icon" href="/favicon.ico?v=2" sizes="32x32 48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
+    <title>CostaCam - Spot</title>
+    <style>
+        :root {
+            --color-black: #111;
+            --color-gray-light: #f7f7f7;
+            --color-border: #eaeaea;
+            --color-text: #333;
+            --color-red: #ff3b30;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--color-text);
+            background: #fff;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header a {
+            text-decoration: none;
+            color: var(--color-black);
+            font-weight: 600;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            flex: 1;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+        }
+        .spot-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .spot-header h2 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin: 0 0 1rem 0;
+            letter-spacing: -1px;
+        }
+        .today-size {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 30px;
+            background: var(--color-gray-light);
+        }
+        .video-wrapper {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+        }
+        .day-card {
+            background: #fff;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .day-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        .wave-size {
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        .wind-info {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        /* Black Footer */
+        footer {
+            background-color: #000000;
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-top: 4rem;
+            width: 100%;
+        }
+        footer h3 { margin: 0 0 8px 0; font-weight: 800; letter-spacing: 2px; font-size: 1.5rem; }
+        footer .tagline { color: #999; font-size: 0.9rem; margin: 0 0 1.5rem 0; display: block; text-decoration: none; }
+        footer .powered-by {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: #aaa;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: #222;
+            border-radius: 20px;
+            margin-top: 1rem;
+            transition: background 0.2s;
+        }
+        footer .powered-by:hover { background: #333; color: #fff; }
+
+        /* Spot Info Section */
+        .spot-info {
+            margin-top: 3rem;
+            padding-top: 3rem;
+            border-top: 1px solid var(--color-border);
+        }
+        .spot-info h3 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin: 0 0 1.5rem 0;
+        }
+        .spot-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .spot-info-item {
+            background: var(--color-gray-light);
+            padding: 1.25rem;
+            border-radius: 12px;
+        }
+        .spot-info-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            margin-bottom: 6px;
+        }
+        .spot-info-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-black);
+            line-height: 1.4;
+        }
+        .spot-description {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 2rem;
+        }
+        .spot-services {
+            background: var(--color-gray-light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--color-black);
+        }
+        .spot-services h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .spot-services p {
+            margin: 0;
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.6;
+        }
+        .spot-info .spot-description { margin: 0 0 1.25rem 0; }
+        .spot-info .spot-info-grid { margin-top: 2rem; }
+        .guide-section { margin-top: 2rem; }
+        .guide-section h4 { font-size: 1.15rem; font-weight: 800; margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 8px; color: var(--color-black); }
+        .guide-list { margin: 0; padding-left: 1.2rem; color: #444; line-height: 1.7; }
+        .guide-list li { margin-bottom: 0.35rem; }
+        .guide-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0 2rem; margin-bottom: 2rem; }
+        .guide-conditions { display: grid; grid-template-columns: max-content 1fr; gap: 0.6rem 1.25rem; margin: 0; background: var(--color-gray-light); padding: 1.25rem; border-radius: 12px; }
+        .guide-conditions dt { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: #888; padding-top: 2px; }
+        .guide-conditions dd { margin: 0; color: #333; line-height: 1.5; }
+        .guide-water { border: 1px solid var(--color-border); border-radius: 12px; overflow: hidden; }
+        .guide-water-row { display: grid; grid-template-columns: 1.2fr 0.8fr 2fr; gap: 1rem; padding: 0.8rem 1rem; border-top: 1px solid var(--color-border); align-items: center; }
+        .guide-water-row:first-child { border-top: none; }
+        .guide-water-season { font-weight: 700; color: var(--color-black); }
+        .guide-water-temp { font-weight: 800; color: #007aff; white-space: nowrap; }
+        .guide-water-suit { color: #555; font-size: 0.95rem; }
+        .guide-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+        .guide-chip { background: var(--color-gray-light); border: 1px solid var(--color-border); padding: 8px 14px; border-radius: 20px; color: var(--color-black); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+        .guide-chip:hover { background: #eaeaea; }
+        .guide-disclaimer { margin-top: 2rem; font-size: 0.85rem; color: #999; font-style: italic; }
+        @media (max-width: 480px) {
+            .spot-info-grid { grid-template-columns: 1fr 1fr; }
+            .guide-conditions { grid-template-columns: 1fr; gap: 0.2rem; }
+            .guide-conditions dd { margin-bottom: 0.6rem; }
+            .guide-water-row { grid-template-columns: 1fr auto; }
+            .guide-water-suit { grid-column: 1 / -1; }
+        }
+        /* Live webcam */
+        .spot-cam { margin-bottom: 3rem; }
+        .spot-cam-inner { position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 16 / 9; }
+        .spot-cam-inner video { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cam-live-badge { position: absolute; top: 12px; left: 12px; z-index: 12; display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.6); color: #fff; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; padding: 5px 10px; border-radius: 20px; pointer-events: none; }
+        .cam-live-badge::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--color-red); }
+        .ext-cam-link { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; background: var(--color-gray-light); border-radius: 12px; padding: 1rem 1.25rem; margin: -1.5rem 0 3rem 0; }
+        .ext-cam-link a { background: #111; color: #fff; padding: 8px 16px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 0.9rem; }
+
+        .loading {
+            text-align: center;
+            padding: 5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #888;
+        }
+
+        /* Responsive base */
+        html { box-sizing: border-box; }
+        *, *:before, *:after { box-sizing: inherit; }
+        img, video { max-width: 100%; height: auto; }
+
+        /* Unified Header CSS */
+        header { padding: 1.5rem 3rem; background: #fff; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 1rem; }
+        header h1 { margin: 0; font-size: 1.5rem; font-weight: 900; letter-spacing: -1px; cursor: pointer; white-space: nowrap; }
+        
+        .header-links { font-size: 0.95rem; display: flex; gap: 20px; align-items:center; flex-wrap: wrap; }
+        .header-links span, .header-links a { cursor: pointer; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; color: #666; padding-bottom: 4px; text-decoration: none; transition: color 0.2s; white-space: nowrap; }
+        .header-links span:hover, .header-links a:hover { color: var(--color-black); }
+        .header-links span.active, .header-links a.active { color: var(--color-black); font-weight: 800; border-bottom: 2px solid var(--color-black); }
+        
+        .search-container { position: relative; flex-grow: 1; min-width: 150px; max-width: 250px; }
+        .search-input { width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 20px; outline: none; font-size: 0.9rem; }
+        
+        #profile-btn-nav { display:flex; align-items:center; background:#f5f5f5; padding:8px 16px; border-radius:20px; text-decoration:none; color:#333; font-weight:600; font-size:0.9rem; border:1px solid #eaeaea; transition:background 0.2s; white-space: nowrap; }
+        #profile-btn-nav:hover { background: #eaeaea; }
+
+        /* Media Queries Universales */
+        @media (max-width: 1150px) {
+            header { flex-direction: column; padding: 1rem; }
+            .header-links { justify-content: center; width: 100%; gap: 15px; }
+            .search-container { max-width: 100%; order: -1; margin-bottom: 10px; width: 100%; }
+            .search-input { border-radius: 8px; padding: 10px; }
+        }
+
+        @media (max-width: 480px) {
+            .header-links { font-size: 0.85rem; gap: 10px; }
+            #profile-btn-nav { padding: 6px 12px; font-size: 0.85rem; }
+        }
+
+    </style>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://marine-api.open-meteo.com" crossorigin>
+    <link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
+    <link rel="preconnect" href="https://dcndjvilqdzezlcbsnrh.supabase.co" crossorigin>
+    <script src="/common.js?v=22"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js" integrity="sha384-dl/4LkSyQ4uEucc48NM6VDZLAjLLq9yMzZ5JLXumBq7Ld33XBof73hseOqPhO89+" crossorigin="anonymous" defer></script>
+    <script src="/spot-guides.js?v=4" defer></script>
+    <script src="/supabase-config.js?v=7" defer></script>
+
+    <style>
+        /* Ensure videos preserve aspect ratio and don't crop in fullscreen */
+        video:-webkit-full-screen { object-fit: contain !important; }
+        video:-moz-full-screen { object-fit: contain !important; }
+        video:-ms-fullscreen { object-fit: contain !important; }
+        video:fullscreen { object-fit: contain !important; }
+
+        .cam-loader {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+            z-index: 10;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid #fff; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 data-href="/">COSTASURF CAMS</h1>
+        <div class="header-links">
+            <div class="search-container">
+                <input type="text" id="spot-search" class="search-input" placeholder="Buscar spot...">
+                <div id="search-results" style="display:none;position:absolute;top:100%;left:0;width:100%;background:#fff;border:1px solid var(--color-border);border-radius:8px;margin-top:5px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:1000;max-height:200px;overflow-y:auto;"></div>
+            </div>
+            <a href="/webcams" id="tab-camaras">Webcams</a>
+            <a href="/forecast" id="tab-forecast">Forecast</a>
+            <a href="/herramientas" id="tab-herramientas">Herramientas</a>
+            <a href="/perfil" id="profile-btn-nav">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Mi Perfil
+            </a>
+        </div>
+    </header>
+
+    <div class="container" id="content">
+        <div class="loading">Cargando spot...</div>
+    </div>
+
+    
+    <!-- Footer -->
+    <footer>
+        <h3>COSTASURF CAMS</h3>
+        <p class="tagline">Tu ventana en directo a las mejores olas de Málaga.</p>
+        <a class="tagline" style="display:block; margin-bottom: 0;">Webcams powered by Meteo360</a>
+        <a class="powered-by" href="https://open-meteo.com" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+            Forecast powered by Open-Meteo Marine API
+        </a>
+    
+        <div style="margin-top:20px; font-size:0.8rem; display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
+            <a href="/info" style="color:#aaa; text-decoration:none;">Info</a>
+            <a href="/legal.html#aviso" style="color:#aaa; text-decoration:none;">Aviso Legal</a>
+            <a href="/legal.html#privacidad" style="color:#aaa; text-decoration:none;">Privacidad</a>
+            <a href="/legal.html#cookies" style="color:#aaa; text-decoration:none;">Política de Cookies</a>
+        </div>
+    </footer>
+
+
+    <script src="/js/spot.js?v=1"></script>
+
+    <!-- Auth Popup -->
+    <div id="auth-popup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+        <div style="background:#fff; padding:2rem; border-radius:12px; width:90%; max-width:400px; text-align:center; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+            <button type="button" class="auth-popup-close" aria-label="Cerrar" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#888;">&times;</button>
+            <h3 style="margin-top:0; font-size:1.5rem; font-weight:800;">¡Únete a CostaCam!</h3>
+            <p style="color:#666; margin-bottom:1.5rem;">Inicia sesión para guardar tus spots, <strong>recibir alertas de olas por correo</strong> y acceder a todas las previsiones.</p>
+            <a href="/login" style="display:block; background:#111; color:#fff; text-decoration:none; padding:12px; border-radius:6px; font-weight:bold; margin-bottom:10px;">Iniciar Sesión</a>
+            <a href="/login?signup=true" style="display:block; background:#f7f7f7; color:#111; text-decoration:none; padding:12px; border-radius:6px; font-weight:bold; border:1px solid #eaeaea;">Crear Cuenta</a>
+        </div>
+    </div>
+
+
+</body>
+</html>

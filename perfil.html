@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml"><link rel="icon" href="/favicon.ico?v=2" sizes="32x32 48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
+    <title>Mi Perfil - CostaCam</title>
+    <style>
+        :root { --color-black: #111; --color-border: #eaeaea; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        .container { max-width: 1000px; width: 100%; margin: 3rem auto; padding: 0 1.5rem; flex: 1; }
+        
+        .profile-header { background: #f7f7f7; padding: 2rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; border: 1px solid var(--color-border); flex-wrap: wrap; gap: 20px;}
+        .profile-header h2 { margin: 0; font-size: 1.2rem; color: #666; font-weight: 500; }
+        .profile-header .email { font-size: 1.5rem; font-weight: 800; color: var(--color-black); margin-top: 5px; overflow-wrap: anywhere; }
+        .profile-id { display: flex; align-items: center; gap: 20px; min-width: 0; }
+        .profile-text { min-width: 0; }
+        /* Fixed circle: never squeezed by a long email */
+        #avatar-container { width: 80px; height: 80px; flex: 0 0 80px; border-radius: 50%; background: #eaeaea; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: #888; }
+        #avatar-container img { width: 100%; height: 100%; max-width: none; object-fit: cover; display: block; }
+        
+        .btn-action { background: #fff; border: 1px solid #111; color: #111; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; text-decoration: none; }
+        .btn-action:hover { background: #f0f0f0; }
+        .btn-logout { background: #fff; border: 1px solid #ddd; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .btn-logout:hover { background: #fee; border-color: #fcc; color: red; }
+        
+        .section-title { font-size: 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; }
+        
+        .fav-grid { display: flex; flex-direction: column; gap: 2rem; }
+        .fav-card { display: block; border: 1px solid var(--color-border); border-radius: 12px; overflow: hidden; background: #fff; position: relative; }
+        .fav-card-header { padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); }
+        .fav-card-header h3 { margin: 0; font-size: 1.3rem; }
+        .fav-card-header span { font-size: 0.9rem; color: #888; display: block; margin-top: 4px; }
+        
+        .remove-btn { background: none; border: none; color: #999; cursor: pointer; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .remove-btn:hover { color: red; background: #fee; }
+        
+        .fav-card-body { padding: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        
+        .video-wrapper { background: #000; border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; }
+        .video-wrapper video { width: 100%; height: 100%; object-fit: cover; }
+        
+        .forecast-wrapper { font-size: 0.9rem; }
+        .forecast-wrapper h4 { margin-top: 0; margin-bottom: 10px; font-size: 1rem; display: flex; align-items: center; }
+        
+        .forecast-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; }
+        .forecast-item { background: #f7f7f7; padding: 10px; border-radius: 8px; text-align: center; }
+        .forecast-item .time { font-weight: bold; margin-bottom: 5px; color: #555; }
+        .forecast-item .wave { font-size: 1.1rem; font-weight: 800; color: #111; }
+        .forecast-item .wind { font-size: 0.8rem; color: #888; margin-top: 4px; }
+
+        .empty-state { text-align: center; padding: 4rem 0; color: #888; }
+        
+        @media (max-width: 768px) {
+            .fav-card-body { grid-template-columns: 1fr; }
+            .profile-header { flex-direction: column; text-align: center; padding: 1.5rem 1.25rem; }
+            .profile-id { flex-direction: column; gap: 12px; width: 100%; }
+            .profile-text { width: 100%; }
+            .profile-header .email { font-size: 1.1rem; }
+            .forecast-grid { grid-template-columns: repeat(2, 1fr); }
+            .fav-card-header { flex-direction: column; text-align: center; gap: 15px; }
+        }
+    
+        /* Responsive base */
+        html { box-sizing: border-box; }
+        *, *:before, *:after { box-sizing: inherit; }
+        img, video { max-width: 100%; height: auto; }
+
+        /* Unified Header CSS */
+        header { padding: 1.5rem 3rem; background: #fff; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 1rem; }
+        header h1 { margin: 0; font-size: 1.5rem; font-weight: 900; letter-spacing: -1px; cursor: pointer; white-space: nowrap; }
+        
+        .header-links { font-size: 0.95rem; display: flex; gap: 20px; align-items:center; flex-wrap: wrap; }
+        .header-links span, .header-links a { cursor: pointer; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; color: #666; padding-bottom: 4px; text-decoration: none; transition: color 0.2s; white-space: nowrap; }
+        .header-links span:hover, .header-links a:hover { color: var(--color-black); }
+        .header-links span.active, .header-links a.active { color: var(--color-black); font-weight: 800; border-bottom: 2px solid var(--color-black); }
+        
+        .search-container { position: relative; flex-grow: 1; min-width: 150px; max-width: 250px; }
+        .search-input { width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 20px; outline: none; font-size: 0.9rem; }
+        
+        #profile-btn-nav { display:flex; align-items:center; background:#f5f5f5; padding:8px 16px; border-radius:20px; text-decoration:none; color:#333; font-weight:600; font-size:0.9rem; border:1px solid #eaeaea; transition:background 0.2s; white-space: nowrap; }
+        #profile-btn-nav:hover { background: #eaeaea; }
+
+        /* Media Queries Universales */
+        @media (max-width: 1150px) {
+            header { flex-direction: column; padding: 1rem; }
+            .header-links { justify-content: center; width: 100%; gap: 15px; }
+            .search-container { max-width: 100%; order: -1; margin-bottom: 10px; width: 100%; }
+            .search-input { border-radius: 8px; padding: 10px; }
+        }
+
+        @media (max-width: 480px) {
+            .header-links { font-size: 0.85rem; gap: 10px; }
+            #profile-btn-nav { padding: 6px 12px; font-size: 0.85rem; }
+        }
+
+    
+        /* Black Footer */
+        footer {
+            background-color: #000000;
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-top: 4rem;
+            width: 100%;
+        }
+        footer h3 { margin: 0 0 8px 0; font-weight: 800; letter-spacing: 2px; font-size: 1.5rem; }
+        footer .tagline { color: #999; font-size: 0.9rem; margin: 0 0 1.5rem 0; display: block; text-decoration: none;}
+        footer .powered-by {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: #aaa;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: #222;
+            border-radius: 20px;
+            margin-top: 1rem;
+            transition: background 0.2s;
+        }
+        footer .powered-by:hover { background: #333; color: #fff; }
+
+</style>
+
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://dcndjvilqdzezlcbsnrh.supabase.co" crossorigin>
+    <script src="/common.js?v=22"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js" integrity="sha384-dl/4LkSyQ4uEucc48NM6VDZLAjLLq9yMzZ5JLXumBq7Ld33XBof73hseOqPhO89+" crossorigin="anonymous" defer></script>
+    <script src="/supabase-config.js?v=7" defer></script>
+
+    <style>
+        /* Ensure videos preserve aspect ratio and don't crop in fullscreen */
+        video:-webkit-full-screen { object-fit: contain !important; }
+        video:-moz-full-screen { object-fit: contain !important; }
+        video:-ms-fullscreen { object-fit: contain !important; }
+        video:fullscreen { object-fit: contain !important; }
+
+        .cam-loader {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+            z-index: 10;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid #fff; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Wave alerts switch: turning it on sends the user to the alerts tool */
+        .alerts-row { display: flex; align-items: center; gap: 12px; background: #f7f7f7; border: 1px solid var(--color-border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 2rem; color: #111; font-weight: 700; cursor: pointer; }
+        .alerts-row .toggle-switch { margin-left: auto; }
+
+        /* Delete account */
+        .danger-zone { margin-top: 4rem; border: 1px solid #f3c4c4; border-radius: 12px; padding: 1.5rem; }
+        .danger-zone h3 { margin: 0 0 0.4rem 0; font-size: 1.1rem; color: #b42318; }
+        .danger-zone p { margin: 0 0 1rem 0; color: #666; font-size: 0.9rem; line-height: 1.5; }
+        .btn-danger { background: #fff; border: 1px solid #d92d20; color: #b42318; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 700; font-family: inherit; }
+        .btn-danger:hover:not(:disabled) { background: #fef3f2; }
+        .btn-danger.solid { background: #d92d20; color: #fff; }
+        .btn-danger.solid:hover:not(:disabled) { background: #b42318; }
+        .btn-danger:disabled { opacity: 0.5; cursor: default; }
+        .delete-confirm { display: none; flex-direction: column; gap: 10px; max-width: 420px; }
+        .delete-confirm input { padding: 12px; border: 1px solid #ddd; border-radius: 6px; font: inherit; }
+        .delete-confirm .row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .delete-msg { color: #b42318; font-size: 0.85rem; font-weight: 600; }
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ddd; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: #111; }
+        input:checked + .slider:before { transform: translateX(20px); }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 data-href="/">COSTASURF CAMS</h1>
+        <div class="header-links">
+            <div class="search-container">
+                <input type="text" id="spot-search" class="search-input" placeholder="Buscar spot...">
+                <div id="search-results" style="display:none;position:absolute;top:100%;left:0;width:100%;background:#fff;border:1px solid var(--color-border);border-radius:8px;margin-top:5px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:1000;max-height:200px;overflow-y:auto;"></div>
+            </div>
+            <a href="index.html" id="tab-camaras">Webcams</a>
+            <a href="index.html" id="tab-forecast">Forecast</a>
+            <a href="/herramientas" id="tab-herramientas">Herramientas</a>
+            <a href="perfil.html" id="profile-btn-nav">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Mi Perfil
+            </a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="profile-header">
+            <div class="profile-id">
+                <div id="avatar-container">
+                </div>
+                <div class="profile-text">
+                    <h2 id="user-name">Hola,</h2>
+                    <div class="email" id="user-email">Cargando...</div>
+                </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn-action" id="edit-profile-btn">Editar Perfil</button>
+                <button class="btn-logout" id="logout-btn">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <label class="alerts-row" for="profile-alerts">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <span>Activar alertas de olas</span>
+            <span class="toggle-switch">
+                <input type="checkbox" id="profile-alerts">
+                <span class="slider"></span>
+            </span>
+        </label>
+
+        <h3 class="section-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            Mis Spots Favoritos
+        </h3>
+        
+        <div class="fav-grid" id="fav-container">
+            <div style="color:#888;">Cargando favoritos...</div>
+        </div>
+
+        <section class="danger-zone">
+            <h3>Borrar mi cuenta</h3>
+            <p>Se borrarán tu cuenta, tus spots favoritos y tus alertas de olas. No se puede deshacer.</p>
+            <button type="button" class="btn-danger" id="delete-start-btn">Borrar mi cuenta</button>
+            <div class="delete-confirm" id="delete-confirm">
+                <label for="delete-word" id="delete-label"></label>
+                <input type="text" id="delete-word" autocomplete="off" autocapitalize="characters">
+                <div class="row">
+                    <button type="button" class="btn-danger solid" id="delete-confirm-btn" disabled>Borrar definitivamente</button>
+                    <button type="button" class="btn-logout" id="delete-cancel-btn">Cancelar</button>
+                </div>
+                <div class="delete-msg" id="delete-msg"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="edit-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:2rem; border-radius:12px; width:90%; max-width:400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0; font-size:1.5rem; margin-bottom:1.5rem;">Editar Perfil</h3>
+            <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:0.9rem; color:#555;">Nombre de usuario</label>
+            <input type="text" id="edit-name" maxlength="40" placeholder="Tu nombre" style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box; outline:none; font-family:inherit;">
+            <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:0.9rem; color:#555;">URL Foto de Perfil (Opcional)</label>
+            <input type="url" id="edit-avatar" maxlength="500" placeholder="https://..." style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box; outline:none; font-family:inherit;">
+            <div style="display:flex; gap:10px;">
+                <button id="save-profile-btn" style="flex:1; background:#111; color:#fff; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold; font-family:inherit; transition:background 0.2s;">Guardar</button>
+                <button id="cancel-profile-btn" style="flex:1; background:#fff; color:#111; border:1px solid #ddd; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold; font-family:inherit; transition:background 0.2s;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/perfil.js?v=1"></script>
+
+    <!-- Footer -->
+    <footer>
+        <h3>COSTASURF CAMS</h3>
+        <p class="tagline">Tu ventana en directo a las mejores olas de Málaga.</p>
+        <a class="tagline" style="display:block; margin-bottom: 0;">Webcams powered by Meteo360</a>
+        <a class="powered-by" href="https://open-meteo.com" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+            Forecast powered by Open-Meteo Marine API
+        </a>
+    
+        <div style="margin-top:20px; font-size:0.8rem; display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
+            <a href="/info" style="color:#aaa; text-decoration:none;">Info</a>
+            <a href="/legal.html#aviso" style="color:#aaa; text-decoration:none;">Aviso Legal</a>
+            <a href="/legal.html#privacidad" style="color:#aaa; text-decoration:none;">Privacidad</a>
+            <a href="/legal.html#cookies" style="color:#aaa; text-decoration:none;">Política de Cookies</a>
+        </div>
+    </footer>
+
+</body>
+</html>

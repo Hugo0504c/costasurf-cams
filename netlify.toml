@@ -1,0 +1,39 @@
+[build]
+  publish = "."
+
+# The webcam proxy (netlify/edge-functions/proxy.ts) declares its own path and rate limit in code:
+# Netlify only reads rate limits from the function file, not from this file.
+
+# Scripts and icons are linked with a version (?v=N) that is bumped whenever the file changes, so browsers can keep
+# them for a week instead of asking Netlify again on every page (fewer requests = fewer credits).
+# HTML keeps Netlify's default (always revalidated), so a new deploy shows up straight away.
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+[[headers]]
+  for = "/*.ico"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+# Security headers for every page.
+# The CSP lists every outside service the site uses; anything else (e.g. an injected script from another
+# domain) is blocked. Scripts may only come from files (no inline <script> or onclick=""), so injected HTML can't
+# run code. Inline styles are still allowed ('unsafe-inline' in style-src): the pages use style="" everywhere.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://marine-api.open-meteo.com https://api.open-meteo.com https://cdn.jsdelivr.net; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"

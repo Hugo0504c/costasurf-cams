@@ -1,0 +1,28 @@
+# Internal files are deployed with the site (publish = "."): never serve them
+/netlify/*          /404.html                    404!
+/scripts/*          /404.html                    404!
+/supabase/*         /404.html                    404!
+/node_modules/*     /404.html                    404!
+/package.json       /404.html                    404!
+/package-lock.json  /404.html                    404!
+/deno.lock          /404.html                    404!
+/netlify.toml       /404.html                    404!
+
+/login              /login.html                  200
+/perfil             /perfil.html                 200
+/premium            /                            301
+/webcams            /index.html                  200
+/forecast           /index.html                  200
+/herramientas       /herramientas.html           200
+/info               /info.html                   200
+
+/misericordia       /spot.html?id=misericordia   200
+/fuengirola         /spot.html?id=fuengirola     200
+/malapesquera       /spot.html?id=malapesquera   200
+/fuente-de-la-salud /spot.html?id=malapesquera   200
+/malagueta          /spot.html?id=malagueta      200
+/bajondillo         /spot.html?id=bajondillo     200
+/nerja              /spot.html?id=nerja          200
+/alamos             /spot.html?id=alamos         200
+/cabopino           /spot.html?id=cabopino       200
+/benajarafe         /spot.html?id=benajarafe     200

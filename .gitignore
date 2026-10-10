@@ -1,0 +1,9 @@
+# Installed packages (npm install recreates them from package-lock.json)
+node_modules
+
+# Local Netlify folder
+.netlify
+
+.vercel
+# Local secrets: never commit them
+.env*

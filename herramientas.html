@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml"><link rel="icon" href="/favicon.ico?v=2" sizes="32x32 48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
+    <title>Herramientas - CostaCam</title>
+    <style>
+        :root { --color-black: #111; --color-gray-light: #f7f7f7; --color-border: #eaeaea; }
+        /* Column layout so the footer always sits at the bottom, even on short pages */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; color: #333; background: #fff; display: flex; flex-direction: column; min-height: 100vh; }
+        html { box-sizing: border-box; }
+        *, *:before, *:after { box-sizing: inherit; }
+
+        /* Unified Header CSS */
+        header { padding: 1.5rem 3rem; background: #fff; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 1rem; }
+        header h1 { margin: 0; font-size: 1.5rem; font-weight: 900; letter-spacing: -1px; cursor: pointer; white-space: nowrap; }
+        .header-links { font-size: 0.95rem; display: flex; gap: 20px; align-items:center; flex-wrap: wrap; }
+        .header-links span, .header-links a { cursor: pointer; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; color: #666; padding-bottom: 4px; text-decoration: none; transition: color 0.2s; white-space: nowrap; }
+        .header-links span:hover, .header-links a:hover { color: var(--color-black); }
+        .header-links span.active, .header-links a.active { color: var(--color-black); font-weight: 800; border-bottom: 2px solid var(--color-black); }
+        .search-container { position: relative; flex-grow: 1; min-width: 150px; max-width: 250px; }
+        .search-input { width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 20px; outline: none; font-size: 0.9rem; }
+        #profile-btn-nav { display:flex; align-items:center; background:#f5f5f5; padding:8px 16px; border-radius:20px; text-decoration:none; color:#333; font-weight:600; font-size:0.9rem; border:1px solid #eaeaea; transition:background 0.2s; white-space: nowrap; }
+        #profile-btn-nav:hover { background: #eaeaea; }
+        @media (max-width: 1150px) {
+            header { flex-direction: column; padding: 1rem; }
+            .header-links { justify-content: center; width: 100%; gap: 15px; }
+            .search-container { max-width: 100%; order: -1; margin-bottom: 10px; width: 100%; }
+            .search-input { border-radius: 8px; padding: 10px; }
+        }
+        @media (max-width: 480px) {
+            .header-links { font-size: 0.85rem; gap: 10px; }
+            #profile-btn-nav { padding: 6px 12px; font-size: 0.85rem; }
+        }
+
+        .container { max-width: 1000px; width: 100%; margin: 0 auto; padding: 3rem 1.5rem; flex: 1; }
+        .page-title { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.5rem 0; color: var(--color-black); }
+        .page-intro { color: #666; margin: 0 0 2rem 0; }
+
+        /* Collapsible tool card */
+        .tool { border: 1px solid var(--color-border); border-radius: 12px; background: #fff; overflow: hidden; }
+        .tool + .tool { margin-top: 1.5rem; }
+        .tool > summary { list-style: none; cursor: pointer; padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 14px; background: var(--color-gray-light); }
+        .tool > summary::-webkit-details-marker { display: none; }
+        .tool > summary:hover { background: #f0f0f0; }
+        .tool-icon { width: 44px; height: 44px; border-radius: 10px; background: #111; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .tool-title { font-weight: 800; font-size: 1.15rem; color: var(--color-black); }
+        .tool-desc { font-size: 0.85rem; color: #777; margin-top: 2px; }
+        .tool-chevron { margin-left: auto; transition: transform 0.2s; color: #666; flex-shrink: 0; }
+        .tool[open] .tool-chevron { transform: rotate(180deg); }
+        .tool-body { padding: 1.5rem; border-top: 1px solid var(--color-border); }
+
+        /* Wave calendar */
+        .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+        .cal-month { font-size: 1.3rem; font-weight: 800; color: var(--color-black); }
+        .cal-nav { display: flex; gap: 6px; }
+        .cal-nav button { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--color-border); background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #111; }
+        .cal-nav button:hover { background: var(--color-gray-light); }
+        .cal-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 1rem; font-size: 0.85rem; }
+        .cal-legend span { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #444; }
+        .cal-legend i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+        .cal-dow { text-align: center; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #999; padding-bottom: 4px; }
+        .cal-day { min-height: 92px; border: 1px solid var(--color-border); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 3px; background: #fff; text-align: left; font: inherit; color: inherit; }
+        .cal-day.empty { border: none; background: none; }
+        .cal-day.past { background: #fafafa; color: #bbb; }
+        .cal-day.has-data { cursor: pointer; }
+        .cal-day.has-data:hover { border-color: #bbb; }
+        .cal-day.today { border: 2px solid #111; }
+        .cal-day.selected { box-shadow: 0 0 0 3px rgba(17,17,17,0.15); }
+        .cal-num { font-size: 0.8rem; font-weight: 700; }
+        .cal-pill { display: flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 700; color: #222; background: color-mix(in srgb, var(--c) 14%, white); border-left: 3px solid var(--c); border-radius: 4px; padding: 1px 4px; white-space: nowrap; overflow: hidden; }
+        .cal-detail { margin-top: 1.25rem; background: var(--color-gray-light); border-radius: 10px; padding: 1rem 1.25rem; }
+        .cal-detail h4 { margin: 0 0 0.75rem 0; font-size: 1rem; }
+        .cal-detail-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid #e5e5e5; font-size: 0.9rem; }
+        .cal-detail-row:first-of-type { border-top: none; }
+        .cal-detail-row i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); flex-shrink: 0; }
+        .cal-detail-row a { color: #111; font-weight: 700; text-decoration: none; }
+        .cal-detail-row a:hover { text-decoration: underline; }
+        .cal-detail-row span { margin-left: auto; color: #555; white-space: nowrap; }
+        .cal-note { font-size: 0.8rem; color: #999; margin: 1rem 0 0 0; }
+        .cal-message { text-align: center; color: #666; padding: 2rem 1rem; }
+        .cal-message a { color: #111; font-weight: 700; }
+        @media (max-width: 600px) {
+            .tool-body { padding: 1rem 0.6rem; }
+            .cal-grid { gap: 3px; }
+            .cal-day { min-height: 70px; padding: 3px; }
+            .cal-pill { font-size: 0.62rem; padding: 0 2px; border-left-width: 2px; gap: 0; }
+            .cal-pill .unit { display: none; }
+        }
+
+        /* Page title row + tool reordering */
+        .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+        .btn-order { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #ddd; color: #111; padding: 8px 14px; border-radius: 20px; font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; margin-top: 0.4rem; }
+        .btn-order:hover { background: var(--color-gray-light); }
+        .btn-order.done { background: #111; border-color: #111; color: #fff; }
+        .tool-move { display: none; margin-left: auto; gap: 6px; flex-shrink: 0; }
+        .tool-move button { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #ddd; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #111; }
+        .tool-move button:hover:not(:disabled) { background: #eee; }
+        .tool-move button:disabled { opacity: 0.3; cursor: default; }
+        #tools.editing .tool-move { display: flex; }
+        #tools.editing .tool-chevron { display: none; }
+        #tools.editing .tool > summary { cursor: default; }
+        #tools.editing .tool { border-style: dashed; border-color: #bbb; }
+
+        /* Spot comparator (chart palette: validated categorical slots 1-2) */
+        .cmp-root {
+            --surface-1: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+            --grid: #e1e0d9; --axis: #c3c2b7; --series-1: #2a78d6; --series-2: #eb6834;
+        }
+        .cmp-pickers { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: end; margin-bottom: 1rem; }
+        .cmp-pickers label { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #555; margin-bottom: 6px; }
+        .cmp-key { display: inline-block; width: 14px; height: 2px; border-radius: 1px; background: var(--c); }
+        .cmp-vs { font-weight: 800; color: #999; padding-bottom: 12px; }
+        .cmp-metrics { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+        .cmp-metrics button { border: 1px solid #ddd; background: #fff; color: #333; padding: 7px 14px; border-radius: 20px; font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+        .cmp-metrics button.active { background: #111; border-color: #111; color: #fff; }
+        .cmp-legend { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); }
+        .cmp-legend span { display: inline-flex; align-items: center; gap: 8px; }
+        .cmp-legend b { color: var(--text-primary); }
+        .cmp-chart { position: relative; background: var(--surface-1); border: 1px solid var(--color-border); border-radius: 10px; padding: 8px 4px 0 4px; }
+        .cmp-chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+        .cmp-chart svg:focus { outline: 2px solid #111; outline-offset: 2px; border-radius: 6px; }
+        .cmp-tip { position: absolute; top: 8px; pointer-events: none; background: #fff; border: 1px solid rgba(11,11,11,0.1); box-shadow: 0 4px 14px rgba(0,0,0,0.12); border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; display: none; z-index: 2; }
+        .cmp-tip-time { font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .cmp-tip-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+        .cmp-tip-row strong { color: var(--text-primary); font-size: 0.9rem; }
+        .cmp-tip-row em { font-style: normal; color: var(--text-muted); }
+        .cmp-table { margin-top: 1rem; }
+        .cmp-table summary { cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #555; }
+        .cmp-table table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+        .cmp-table th, .cmp-table td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--color-border); }
+        .cmp-table th:first-child, .cmp-table td:first-child { text-align: left; }
+        .cmp-table th { color: #888; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; }
+        @media (max-width: 600px) {
+            .cmp-pickers { grid-template-columns: 1fr; }
+            .cmp-vs { display: none; }
+            .page-intro { margin-bottom: 1rem; }
+            .btn-order { margin: 0 0 1.25rem 0; }
+        }
+
+        /* Spot map: same wave-size colours as the Forecast tab (flat gray → yellow → orange → blue) */
+        .map-root { --wave-1: #888888; --wave-2: #ffcc00; --wave-3: #ff9500; --wave-4: #007aff; --wave-none: #d6d6d6; }
+        .map-days { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+        .map-days button { border: 1px solid #ddd; background: #fff; color: #333; padding: 7px 14px; border-radius: 20px; font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+        .map-days button.active { background: #111; border-color: #111; color: #fff; }
+        .map-canvas { height: 440px; border-radius: 10px; border: 1px solid var(--color-border); overflow: hidden; background: #e8eef3; z-index: 0; }
+        .map-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 0.75rem; font-size: 0.8rem; color: #555; }
+        .map-legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .map-legend i { width: 14px; height: 14px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px #fff, 0 0 0 3px #ddd; }
+        .map-pin { width: 42px; height: 42px; border-radius: 50%; background: var(--bg); color: var(--fg); display: flex; align-items: center; justify-content: center; font: 800 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(0,0,0,0.3); transition: transform 0.15s; }
+        .map-pin:hover { transform: scale(1.12); }
+        .map-pin.fav { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #111, 0 3px 8px rgba(0,0,0,0.3); }
+        .map-popup strong { display: block; font-size: 0.95rem; color: #111; margin-bottom: 4px; }
+        .map-popup .map-popup-line { color: #444; font-size: 0.85rem; margin: 2px 0; }
+        .map-popup a { display: inline-block; margin-top: 8px; color: #111; font-weight: 700; text-decoration: underline; }
+        .map-list { margin-top: 1rem; }
+        .map-list summary { cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #555; }
+        .map-list table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; font-size: 0.85rem; }
+        .map-list th, .map-list td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--color-border); }
+        .map-list th { color: #888; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; }
+        .map-list td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .map-list td i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c); margin-right: 8px; }
+        .map-list a { color: #111; font-weight: 600; text-decoration: none; }
+        .map-list a:hover { text-decoration: underline; }
+        @media (max-width: 600px) {
+            .map-canvas { height: 320px; }
+            .map-pin { width: 36px; height: 36px; font-size: 12px; }
+        }
+
+        /* Spot filter (reuses the alert controls and the map's wave-size colours) */
+        .flt-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px; background: var(--color-gray-light); border-radius: 12px; padding: 16px; margin-bottom: 1rem; }
+        .flt-filters .full { grid-column: 1 / -1; }
+        .adv-chip input:disabled + span { opacity: 0.45; cursor: not-allowed; }
+        .flt-hint { font-size: 0.8rem; color: #777; margin-top: 8px; }
+        .flt-hint a { color: #111; font-weight: 700; }
+        .flt-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 0.75rem; }
+        .flt-bar-right { display: flex; align-items: center; gap: 12px; }
+        .flt-bar .modern-select { width: auto; padding: 8px 38px 8px 12px; font-size: 0.85rem; }
+        .flt-count { font-weight: 800; color: #111; }
+        .flt-reset { border: none; background: none; color: #555; font: inherit; font-size: 0.85rem; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; }
+        .flt-list { display: flex; flex-direction: column; gap: 10px; }
+        .flt-card { display: flex; gap: 14px; align-items: center; border: 1px solid var(--color-border); border-left: 6px solid var(--c); border-radius: 10px; padding: 12px 14px; color: inherit; text-decoration: none; background: #fff; }
+        .flt-card:hover { border-color: #bbb; border-left-color: var(--c); }
+        .flt-size { min-width: 62px; text-align: center; font-size: 1.35rem; font-weight: 900; color: #111; font-variant-numeric: tabular-nums; line-height: 1.1; }
+        .flt-size small { display: block; font-size: 0.65rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+        .flt-main { flex: 1; min-width: 0; }
+        .flt-name { font-weight: 800; color: #111; }
+        .flt-tag { display: inline-block; margin-left: 6px; font-size: 0.7rem; font-weight: 700; color: #555; background: var(--color-gray-light); border: 1px solid var(--color-border); border-radius: 20px; padding: 1px 7px; vertical-align: middle; }
+        .flt-line { font-size: 0.85rem; color: #555; margin-top: 3px; }
+        .flt-hours { display: inline-block; margin-top: 6px; font-size: 0.8rem; font-weight: 700; color: #111; background: var(--color-gray-light); border: 1px solid var(--color-border); padding: 3px 8px; border-radius: 6px; }
+        .flt-chevron { color: #999; flex-shrink: 0; }
+        .flt-out { margin-top: 1rem; }
+        .flt-out summary { cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #555; }
+        .flt-out ul { list-style: none; margin: 0.5rem 0 0 0; padding: 0; }
+        .flt-out li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 2px; border-bottom: 1px solid var(--color-border); font-size: 0.85rem; }
+        .flt-out li a { color: #111; font-weight: 600; text-decoration: none; }
+        .flt-out li span { color: #888; text-align: right; }
+        @media (max-width: 600px) {
+            .flt-filters { grid-template-columns: 1fr; }
+            .flt-size { min-width: 50px; font-size: 1.15rem; }
+        }
+
+        /* Calendar spot chips for visitors */
+        .cal-picker { margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border); }
+        .cal-chip-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 6px; vertical-align: 1px; }
+        .adv-chip input:checked + span .cal-chip-dot { box-shadow: 0 0 0 1.5px #fff; }
+
+        /* Divider between the free tools and the ones that need an account (logged out only) */
+        .tools-divider { display: flex; align-items: center; gap: 16px; margin: 2.5rem 0 1.5rem 0; }
+        .tools-divider-line { flex: 1; height: 1px; background: var(--color-border); }
+        .tools-divider-body { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; max-width: 420px; }
+        .tools-divider-body strong { color: #111; font-size: 1rem; }
+        .tools-divider-body span { color: #777; font-size: 0.85rem; }
+        .tools-divider-body .tool-lock-btn { margin-top: 6px; padding: 10px 20px; font-size: 0.9rem; }
+        .btn-order[hidden] { display: none; }
+        @media (max-width: 600px) { .tools-divider-line { display: none; } }
+
+        /* Tools that need an account */
+        .tool-lock-tag { display: inline-block; vertical-align: middle; margin-left: 8px; font-size: 0.68rem; font-weight: 700; color: #555; background: #fff; border: 1px solid #ddd; padding: 2px 8px; border-radius: 20px; }
+        .tool-lock { text-align: center; padding: 2rem 1rem; color: #111; }
+        .tool-lock h4 { margin: 0.75rem 0 0.4rem 0; font-size: 1.1rem; }
+        .tool-lock p { margin: 0 auto 1.25rem auto; color: #666; max-width: 440px; line-height: 1.5; font-size: 0.9rem; }
+        .tool-lock-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .tool-lock-btn { display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 12px 22px; border-radius: 10px; font-weight: 700; }
+        .tool-lock-btn:hover { background: #333; }
+        .tool-lock-btn.secondary { background: #fff; color: #111; border: 1px solid #ddd; }
+        .tool-lock-btn.secondary:hover { background: var(--color-gray-light); }
+
+        /* Wave alerts */
+        .alert-spam { display: flex; gap: 10px; align-items: flex-start; background: #fff8e6; border: 1px solid #f5d98b; color: #6b5200; padding: 12px 14px; border-radius: 10px; font-size: 0.85rem; line-height: 1.5; margin-bottom: 1.5rem; }
+        .alert-box { display: flex; flex-direction: column; gap: 15px; background: #fdfdfd; padding: 20px; border-radius: 14px; border: 1px solid #eaeaea; }
+        .alert-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .alert-label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ddd; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: #111; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .modern-select {
+            width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 10px; border: 1px solid #e0e0e0; background-color: #fff;
+            font-size: 0.95rem; font-weight: 600; color: #333; cursor: pointer; appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat; background-position: right 14px center; background-size: 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .modern-select:focus { outline: none; border-color: #111; box-shadow: 0 0 0 3px rgba(17,17,17,0.1); }
+        .adv-toggle-row { padding-top: 15px; border-top: 1px solid #eaeaea; }
+        .adv-box { flex-direction: column; gap: 18px; background: var(--color-gray-light); border-radius: 12px; padding: 16px; }
+        .adv-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .adv-val { color: #111; font-weight: 800; font-size: 0.95rem; }
+        .adv-range { width: 100%; accent-color: #111; cursor: pointer; }
+        .adv-scale { display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 600; color: #aaa; margin-top: 6px; }
+        .adv-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .adv-chip { position: relative; cursor: pointer; }
+        .adv-chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+        .adv-chip input + span { display: inline-block; padding: 7px 12px; border-radius: 20px; border: 1px solid #ddd; background: #fff; font-size: 0.85rem; font-weight: 600; color: #555; }
+        .adv-chip input:checked + span { background: #111; border-color: #111; color: #fff; }
+        .adv-chip input:focus-visible + span { outline: 2px solid #111; outline-offset: 2px; }
+        .adv-hours { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+        .adv-error { display: none; color: #c62828; font-size: 0.85rem; font-weight: 600; }
+        .btn-save { background: #111; color: #fff; border: none; padding: 14px; font-size: 1rem; font-weight: 700; border-radius: 10px; cursor: pointer; font-family: inherit; }
+        .btn-save:hover { background: #333; }
+
+        footer { background-color: #000; color: white; padding: 3rem 2rem; text-align: center; margin-top: 4rem; width: 100%; }
+        footer h3 { margin: 0 0 8px 0; font-weight: 800; letter-spacing: 2px; font-size: 1.5rem; }
+        footer .tagline { color: #999; font-size: 0.9rem; margin: 0 0 1.5rem 0; display: block; text-decoration: none; }
+        footer .powered-by { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #aaa; text-decoration: none; padding: 8px 16px; background: #222; border-radius: 20px; margin-top: 1rem; transition: background 0.2s; }
+        footer .powered-by:hover { background: #333; color: #fff; }
+    </style>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://marine-api.open-meteo.com" crossorigin>
+    <link rel="preconnect" href="https://dcndjvilqdzezlcbsnrh.supabase.co" crossorigin>
+    <script src="/common.js?v=22"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js" integrity="sha384-dl/4LkSyQ4uEucc48NM6VDZLAjLLq9yMzZ5JLXumBq7Ld33XBof73hseOqPhO89+" crossorigin="anonymous" defer></script>
+    <script src="/supabase-config.js?v=7" defer></script>
+</head>
+<body>
+    <header>
+        <h1 data-href="/">COSTASURF CAMS</h1>
+        <div class="header-links">
+            <div class="search-container">
+                <input type="text" id="spot-search" class="search-input" placeholder="Buscar spot...">
+                <div id="search-results" style="display:none;position:absolute;top:100%;left:0;width:100%;background:#fff;border:1px solid var(--color-border);border-radius:8px;margin-top:5px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:1000;max-height:200px;overflow-y:auto;"></div>
+            </div>
+            <a href="/webcams" id="tab-camaras">Webcams</a>
+            <a href="/forecast" id="tab-forecast">Forecast</a>
+            <a href="/herramientas" id="tab-herramientas" class="active">Herramientas</a>
+            <a href="/perfil" id="profile-btn-nav">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Mi Perfil
+            </a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-head">
+            <div>
+                <h2 class="page-title">Herramientas</h2>
+                <p class="page-intro">Utilidades para planificar tus sesiones en tus spots favoritos.</p>
+            </div>
+            <button type="button" class="btn-order" id="order-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 15 12 20 17 15"></polyline><polyline points="7 9 12 4 17 9"></polyline></svg>
+                <span id="order-btn-text">Editar orden</span>
+            </button>
+        </div>
+
+        <div id="tools">
+        <details class="tool" id="tool-calendar">
+            <summary>
+                <div class="tool-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <div>
+                    <div class="tool-title">Calendario de olas</div>
+                    <div class="tool-desc">Tamaño de ola previsto para los próximos 9 días en tus spots favoritos o los que elijas.</div>
+                </div>
+                <svg class="tool-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </summary>
+            <div class="tool-body" id="calendar-body">
+                <div class="cal-message">Cargando...</div>
+            </div>
+        </details>
+
+        <details class="tool" id="tool-filter">
+            <summary>
+                <div class="tool-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                </div>
+                <div>
+                    <div class="tool-title">Filtrar spots</div>
+                    <div class="tool-desc">Elige uno o varios días y encuentra los spots con las condiciones que buscas.</div>
+                </div>
+                <svg class="tool-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </summary>
+            <div class="tool-body map-root">
+                <span class="alert-label">Días (puedes elegir varios)</span>
+                <div class="map-days" id="flt-days" role="group" aria-label="Días"></div>
+
+                <div class="flt-filters" id="flt-filters">
+                    <div class="full">
+                        <span class="alert-label">Franjas horarias (puedes elegir varias)</span>
+                        <div class="adv-chips" id="flt-band">
+                            <label class="adv-chip"><input type="checkbox" value="any" checked><span>Cualquier hora</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="early"><span>Primera hora (07–10 h)</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="midmorning"><span>Media mañana (10–13 h)</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="afternoon"><span>Tarde (13–17 h)</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="evening"><span>Última hora (17–20 h)</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="adv-head">
+                            <label class="alert-label" for="flt-min-size" style="margin:0;">Tamaño mínimo de ola</label>
+                            <span class="adv-val" id="flt-min-size-val"></span>
+                        </div>
+                        <input type="range" id="flt-min-size" class="adv-range" min="0" max="3" step="0.1" value="0">
+                        <div class="adv-scale"><span>Cualquiera</span><span>3.0m</span></div>
+                    </div>
+                    <div>
+                        <div class="adv-head">
+                            <label class="alert-label" for="flt-max-size" style="margin:0;">Tamaño máximo de ola</label>
+                            <span class="adv-val" id="flt-max-size-val"></span>
+                        </div>
+                        <input type="range" id="flt-max-size" class="adv-range" min="0.5" max="4" step="0.1" value="4">
+                        <div class="adv-scale"><span>0.5m</span><span>Sin límite</span></div>
+                    </div>
+                    <div>
+                        <div class="adv-head">
+                            <label class="alert-label" for="flt-min-period" style="margin:0;">Periodo mínimo</label>
+                            <span class="adv-val" id="flt-min-period-val"></span>
+                        </div>
+                        <input type="range" id="flt-min-period" class="adv-range" min="0" max="14" step="1" value="0">
+                        <div class="adv-scale"><span>Cualquiera</span><span>14 s</span></div>
+                    </div>
+                    <div>
+                        <div class="adv-head">
+                            <label class="alert-label" for="flt-max-wind" style="margin:0;">Viento máximo</label>
+                            <span class="adv-val" id="flt-max-wind-val"></span>
+                        </div>
+                        <input type="range" id="flt-max-wind" class="adv-range" min="5" max="50" step="5" value="50">
+                        <div class="adv-scale"><span>5 km/h</span><span>Sin límite</span></div>
+                    </div>
+                    <div class="full">
+                        <span class="alert-label">Tipo de viento</span>
+                        <div class="adv-chips" id="flt-wind-types">
+                            <label class="adv-chip"><input type="checkbox" value="Glassy" checked><span>Sin viento (glassy)</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="Off-shore" checked><span>Terral (off-shore)</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="Cross-shore" checked><span>Cruzado</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="On-shore" checked><span>De mar (on-shore)</span></label>
+                        </div>
+                    </div>
+                    <div class="full">
+                        <span class="alert-label">Spots</span>
+                        <div class="adv-chips">
+                            <label class="adv-chip" id="flt-favs-chip"><input type="checkbox" id="flt-favs"><span><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.1em"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> <span>Solo favoritos</span></span></label>
+                            <label class="adv-chip"><input type="checkbox" id="flt-cams"><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> <span>Solo con webcam</span></span></label>
+                        </div>
+                        <div class="flt-hint" id="flt-favs-hint" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div class="flt-bar">
+                    <span class="flt-count" id="flt-count"></span>
+                    <div class="flt-bar-right">
+                        <button type="button" class="flt-reset" id="flt-reset">Quitar filtros</button>
+                        <select id="flt-sort" class="modern-select" aria-label="Ordenar">
+                            <option value="score">Mejores condiciones</option>
+                            <option value="wave">Más olas</option>
+                            <option value="wind">Menos viento</option>
+                            <option value="name">Nombre</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="flt-results">
+                    <div class="cal-message">Cargando...</div>
+                </div>
+            </div>
+        </details>
+
+        <details class="tool" id="tool-compare">
+            <summary>
+                <div class="tool-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"></polyline><polyline points="14 7 21 7 21 14"></polyline></svg>
+                </div>
+                <div>
+                    <div class="tool-title"><span>Comparador de spots</span></div>
+                    <div class="tool-desc">Compara dos spots en las próximas 48 horas o el día que elijas.</div>
+                </div>
+                <svg class="tool-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </summary>
+            <div class="tool-body cmp-root">
+                <div class="cmp-pickers">
+                    <div>
+                        <label for="cmp-a"><i class="cmp-key" style="--c:var(--series-1)"></i><span>Spot 1</span></label>
+                        <select id="cmp-a" class="modern-select"></select>
+                    </div>
+                    <div class="cmp-vs">vs</div>
+                    <div>
+                        <label for="cmp-b"><i class="cmp-key" style="--c:var(--series-2)"></i><span>Spot 2</span></label>
+                        <select id="cmp-b" class="modern-select"></select>
+                    </div>
+                </div>
+                <div class="map-days" id="cmp-days" role="group" aria-label="Día"></div>
+                <div class="cmp-metrics" role="group" id="cmp-metrics">
+                    <button type="button" data-metric="wave" class="active">Altura de ola</button>
+                    <button type="button" data-metric="period">Periodo</button>
+                    <button type="button" data-metric="wind">Viento</button>
+                    <button type="button" data-metric="energy">Energía</button>
+                </div>
+                <div id="cmp-content">
+                    <div class="cal-message">Cargando...</div>
+                </div>
+            </div>
+        </details>
+
+        <details class="tool" id="tool-map">
+            <summary>
+                <div class="tool-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                </div>
+                <div>
+                    <div class="tool-title"><span>Mapa de spots</span></div>
+                    <div class="tool-desc">Todos los spots de la costa coloreados según el tamaño de ola previsto.</div>
+                </div>
+                <svg class="tool-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </summary>
+            <div class="tool-body map-root">
+                <div class="map-days" id="map-days"></div>
+                <div class="map-canvas" id="map-canvas" role="region" aria-label="Mapa de spots"></div>
+                <div class="map-legend" id="map-legend"></div>
+                <div id="map-extra"></div>
+            </div>
+        </details>
+
+        <details class="tool" id="tool-alerts">
+            <summary>
+                <div class="tool-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </div>
+                <div>
+                    <div class="tool-title">Alertas de Olas</div>
+                    <div class="tool-desc">Recibe un correo cuando haya buenas previsiones en tus spots favoritos.</div>
+                </div>
+                <svg class="tool-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </summary>
+            <div class="tool-body">
+                <div class="cal-message" id="alerts-message">Cargando...</div>
+
+                <div id="alerts-panel" style="display:none;">
+                    <div class="alert-spam">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        <div><strong>Revisa tu carpeta de spam.</strong> Los avisos pueden llegar a correo no deseado. Si es así, marca el correo como "No es spam" y añade el remitente a tus contactos para que los siguientes lleguen a tu bandeja de entrada.</div>
+                    </div>
+
+                    <div class="alert-box">
+                        <div class="alert-row">
+                            <div style="display:flex; flex-direction:column;">
+                                <span style="font-weight:700; font-size:1rem; color:#111;">Notificaciones por email</span>
+                                <span style="font-size:0.8rem; color:#888; margin-top:2px;">Avisos diarios a las 07:30 (hora de España)</span>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="alert-enabled">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div id="alert-settings" style="display:none; flex-direction:column; gap:15px; padding-top:15px; border-top:1px solid #eaeaea;">
+                            <div>
+                                <label class="alert-label" for="alert-days">Antelación del aviso</label>
+                                <select id="alert-days" class="modern-select">
+                                    <option value="1">1 día antes</option>
+                                    <option value="2">2 días antes</option>
+                                    <option value="3">3 días antes</option>
+                                    <option value="5">5 días antes</option>
+                                </select>
+                            </div>
+                            <div>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <label class="alert-label" for="alert-size" style="margin:0;">Tamaño mínimo de ola</label>
+                                    <span id="alert-size-val" style="color:#111; font-weight:800; font-size:0.95rem;">1.0m+</span>
+                                </div>
+                                <input type="range" id="alert-size" min="0.2" max="3.0" step="0.1" value="1.0" style="width:100%; accent-color:#111; cursor:pointer;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:600; color:#aaa; margin-top:6px;">
+                                    <span>0.2m</span>
+                                    <span>3.0m</span>
+                                </div>
+                            </div>
+
+                            <div class="alert-row adv-toggle-row">
+                                <div style="display:flex; flex-direction:column;">
+                                    <span style="font-weight:700; font-size:0.95rem; color:#111;"><span>Alertas avanzadas</span></span>
+                                    <span style="font-size:0.8rem; color:#888; margin-top:2px;">Filtra también por periodo, viento y horario.</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="alert-advanced">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div id="alert-advanced-settings" class="adv-box" style="display:none;">
+                                <div>
+                                    <div class="adv-head">
+                                        <label class="alert-label" for="alert-min-period" style="margin:0;">Periodo mínimo</label>
+                                        <span class="adv-val" id="alert-min-period-val"></span>
+                                    </div>
+                                    <input type="range" id="alert-min-period" class="adv-range" min="0" max="14" step="1" value="0">
+                                    <div class="adv-scale"><span>Cualquiera</span><span>14 s</span></div>
+                                </div>
+                                <div>
+                                    <div class="adv-head">
+                                        <label class="alert-label" for="alert-max-size" style="margin:0;">Tamaño máximo de ola</label>
+                                        <span class="adv-val" id="alert-max-size-val"></span>
+                                    </div>
+                                    <input type="range" id="alert-max-size" class="adv-range" min="0.5" max="4" step="0.1" value="4">
+                                    <div class="adv-scale"><span>0.5m</span><span>Sin límite</span></div>
+                                </div>
+                                <div>
+                                    <div class="adv-head">
+                                        <label class="alert-label" for="alert-max-wind" style="margin:0;">Viento máximo</label>
+                                        <span class="adv-val" id="alert-max-wind-val"></span>
+                                    </div>
+                                    <input type="range" id="alert-max-wind" class="adv-range" min="5" max="50" step="5" value="50">
+                                    <div class="adv-scale"><span>5 km/h</span><span>Sin límite</span></div>
+                                </div>
+                                <div>
+                                    <span class="alert-label">Tipo de viento</span>
+                                    <div class="adv-chips" id="alert-wind-types">
+                                        <label class="adv-chip"><input type="checkbox" value="Glassy" checked><span>Sin viento (glassy)</span></label>
+                                        <label class="adv-chip"><input type="checkbox" value="Off-shore" checked><span>Terral (off-shore)</span></label>
+                                        <label class="adv-chip"><input type="checkbox" value="Cross-shore" checked><span>Cruzado</span></label>
+                                        <label class="adv-chip"><input type="checkbox" value="On-shore" checked><span>De mar (on-shore)</span></label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="alert-label">Franja horaria</span>
+                                    <div class="adv-hours">
+                                        <select id="alert-from-hour" class="modern-select" aria-label="Desde"></select>
+                                        <span>–</span>
+                                        <select id="alert-to-hour" class="modern-select" aria-label="Hasta"></select>
+                                    </div>
+                                </div>
+                                <div class="adv-error" id="alert-adv-error"></div>
+                            </div>
+                        </div>
+
+                        <button type="button" id="save-alerts-btn" class="btn-save">Guardar Preferencias</button>
+                        <div id="alert-success" style="color:#111; font-size:0.85rem; display:none; text-align:center; font-weight:bold; background:#f5f5f5; padding:10px; border-radius:8px;">¡Tus preferencias se han guardado!</div>
+                    </div>
+                </div>
+            </div>
+        </details>
+        </div>
+    </div>
+
+    <footer>
+        <h3>COSTASURF CAMS</h3>
+        <p class="tagline">Tu ventana en directo a las mejores olas de Málaga.</p>
+        <a class="tagline" style="display:block; margin-bottom: 0;">Webcams powered by Meteo360</a>
+        <a class="powered-by" href="https://open-meteo.com" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+            Forecast powered by Open-Meteo Marine API
+        </a>
+        <div style="margin-top:20px; font-size:0.8rem; display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
+            <a href="/info" style="color:#aaa; text-decoration:none;">Info</a>
+            <a href="/legal.html#aviso" style="color:#aaa; text-decoration:none;">Aviso Legal</a>
+            <a href="/legal.html#privacidad" style="color:#aaa; text-decoration:none;">Privacidad</a>
+            <a href="/legal.html#cookies" style="color:#aaa; text-decoration:none;">Política de Cookies</a>
+        </div>
+    </footer>
+
+    <script src="/js/herramientas.js?v=1"></script>
+</body>
+</html>

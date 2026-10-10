@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml"><link rel="icon" href="/favicon.ico?v=2" sizes="32x32 48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
+    <title>CostaCam - Málaga Surf &amp; Webcams</title>
+    <style>
+        :root {
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --color-text: #111111;
+            --color-bg: #ffffff;
+            --color-black: #000000;
+            --color-gray-light: #f5f5f5;
+            --color-border: #e5e5e5;
+            --color-blue: #0056b3;
+            --color-red: #d93025;
+        }
+
+        body {
+            font-family: var(--font-family);
+            margin: 0; padding: 0;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            width: 100%;
+            box-sizing: border-box;
+            flex: 1;
+        }
+
+        .view-section {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 4rem;
+            width: 100%;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .view-section.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .camera-section { width: 100%; max-width: 1000px; margin: 0 auto; }
+
+        .video-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .video-title { font-size: 2.2rem; font-weight: 800; margin: 0; line-height: 1.2; }
+        .video-location { color: #666; font-size: 1.1rem; font-weight: 500; margin-top: 5px; }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: rgba(217, 48, 37, 0.1);
+            color: var(--color-red);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pulse-dot {
+            width: 10px; height: 10px;
+            background-color: var(--color-red);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(217,48,37,.7); }
+            70%  { box-shadow: 0 0 0 10px rgba(217,48,37,0); }
+            100% { box-shadow: 0 0 0 0 rgba(217,48,37,0); }
+        }
+
+        .video-wrapper {
+            width: 100%;
+            background-color: var(--color-gray-light);
+            border-radius: 12px;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .video-inner {
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 16 / 9;
+            box-shadow: 0 15px 35px rgba(0,0,0,.1);
+        }
+
+        video { width: 100%; height: 100%; display: block; object-fit: cover; }
+
+        footer {
+            background-color: #000000;
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        footer h3 { margin: 0 0 8px 0; font-weight: 800; letter-spacing: 2px; font-size: 1.5rem; }
+        footer .tagline { color: #999; font-size: 0.9rem; margin: 0 0 1.5rem 0; }
+        footer .powered-by {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #444;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #aaa;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        footer .powered-by:hover { border-color: #888; color: #ccc; }
+
+        @media (max-width: 768px) {
+            header { padding: 1.5rem 1.5rem; }
+            .header-links { gap: 15px; font-size: 0.8rem; }
+            .video-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+        }
+    
+        /* Responsive base */
+        html { box-sizing: border-box; }
+        *, *:before, *:after { box-sizing: inherit; }
+        img, video { max-width: 100%; height: auto; }
+
+        /* Unified Header CSS */
+        header { padding: 1.5rem 3rem; background: #fff; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 1rem; }
+        header h1 { margin: 0; font-size: 1.5rem; font-weight: 900; letter-spacing: -1px; cursor: pointer; white-space: nowrap; }
+        
+        .header-links { font-size: 0.95rem; display: flex; gap: 20px; align-items:center; flex-wrap: wrap; }
+        .header-links span, .header-links a { cursor: pointer; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; color: #666; padding-bottom: 4px; text-decoration: none; transition: color 0.2s; white-space: nowrap; }
+        .header-links span:hover, .header-links a:hover { color: var(--color-black); }
+        .header-links span.active, .header-links a.active { color: var(--color-black); font-weight: 800; border-bottom: 2px solid var(--color-black); }
+        
+        .search-container { position: relative; flex-grow: 1; min-width: 150px; max-width: 250px; }
+        .search-input { width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 20px; outline: none; font-size: 0.9rem; }
+        
+        #profile-btn-nav { display:flex; align-items:center; background:#f5f5f5; padding:8px 16px; border-radius:20px; text-decoration:none; color:#333; font-weight:600; font-size:0.9rem; border:1px solid #eaeaea; transition:background 0.2s; white-space: nowrap; }
+        #profile-btn-nav:hover { background: #eaeaea; }
+
+        /* Media Queries Universales */
+        @media (max-width: 1150px) {
+            header { flex-direction: column; padding: 1rem; }
+            .header-links { justify-content: center; width: 100%; gap: 15px; }
+            .search-container { max-width: 100%; order: -1; margin-bottom: 10px; width: 100%; }
+            .search-input { border-radius: 8px; padding: 10px; }
+        }
+
+        @media (max-width: 480px) {
+            .header-links { font-size: 0.85rem; gap: 10px; }
+            #profile-btn-nav { padding: 6px 12px; font-size: 0.85rem; }
+        }
+
+    </style>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://marine-api.open-meteo.com" crossorigin>
+    <link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
+    <link rel="preconnect" href="https://dcndjvilqdzezlcbsnrh.supabase.co" crossorigin>
+    <script src="/common.js?v=22"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js" integrity="sha384-dl/4LkSyQ4uEucc48NM6VDZLAjLLq9yMzZ5JLXumBq7Ld33XBof73hseOqPhO89+" crossorigin="anonymous" defer></script>
+    <script src="/supabase-config.js?v=7" defer></script>
+
+    <style>
+        /* Ensure videos preserve aspect ratio and don't crop in fullscreen */
+        video:-webkit-full-screen { object-fit: contain !important; }
+        video:-moz-full-screen { object-fit: contain !important; }
+        video:-ms-fullscreen { object-fit: contain !important; }
+        video:fullscreen { object-fit: contain !important; }
+
+        .cam-loader {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+            z-index: 10;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid #fff; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 id="home-logo">COSTASURF CAMS</h1>
+        <div class="header-links">
+            <div class="search-container">
+                <input type="text" id="spot-search" class="search-input" placeholder="Buscar spot...">
+                <div id="search-results" style="display:none;position:absolute;top:100%;left:0;width:100%;background:#fff;border:1px solid var(--color-border);border-radius:8px;margin-top:5px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:1000;max-height:200px;overflow-y:auto;"></div>
+            </div>
+            <a href="/webcams" id="tab-camaras" class="active">Webcams</a>
+            <a href="/forecast" id="tab-forecast">Forecast</a>
+            <a href="/herramientas" id="tab-herramientas">Herramientas</a>
+            <a href="/perfil" id="profile-btn-nav">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Mi Perfil
+            </a>
+        </div>
+    </header>
+
+    <div class="main-container">
+
+        <!-- ====================================================== -->
+        <!-- FORECAST VIEW                                           -->
+        <!-- ====================================================== -->
+        <div id="view-forecast" class="view-section">
+            <div style="width:100%;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;">
+                <h2 style="font-size:2.2rem;font-weight:800;margin-bottom:2rem;order:-2;">Surf Forecast</h2>
+                <div id="forecast-grid" style="display:grid;grid-template-columns:1fr;gap:3rem;order:0;">
+
+                    <div class="forecast-card" id="forecast-misericordia" style="background:var(--color-gray-light);padding:2rem;border-radius:12px;border:1px solid var(--color-border); min-width: 0; overflow: hidden;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+                            <div><h3 style="margin:0 0 5px 0;font-size:1.5rem;">Playa La Misericordia</h3><p style="color:#666;margin:0;font-size:0.95rem;">Previsión de oleaje — próximos 9 días</p></div>
+                            <a href="/misericordia" style="background:var(--color-black);color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;display:inline-block;">Ver página del spot</a>
+                        </div>
+                        <div id="forecast-misericordia-days" style="display:flex; overflow-x:auto; gap:15px; padding-bottom:15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"></div>
+                    </div>
+
+                    <div class="forecast-card" id="forecast-fuengirola" style="background:var(--color-gray-light);padding:2rem;border-radius:12px;border:1px solid var(--color-border); min-width: 0; overflow: hidden;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+                            <div><h3 style="margin:0 0 5px 0;font-size:1.5rem;">Los Boliches</h3><p style="color:#666;margin:0;font-size:0.95rem;">Previsión de oleaje — próximos 9 días</p></div>
+                            <a href="/fuengirola" style="background:var(--color-black);color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;display:inline-block;">Ver página del spot</a>
+                        </div>
+                        <div id="forecast-fuengirola-days" style="display:flex; overflow-x:auto; gap:15px; padding-bottom:15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"></div>
+                    </div>
+
+                    <div class="forecast-card" id="forecast-cabopino" style="background:var(--color-gray-light);padding:2rem;border-radius:12px;border:1px solid var(--color-border); min-width: 0; overflow: hidden;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+                            <div><h3 style="margin:0 0 5px 0;font-size:1.5rem;">Cabopino</h3><p style="color:#666;margin:0;font-size:0.95rem;">Previsión de oleaje — próximos 9 días</p></div>
+                            <a href="/cabopino" style="background:var(--color-black);color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;display:inline-block;">Ver página del spot</a>
+                        </div>
+                        <div id="forecast-cabopino-days" style="display:flex; overflow-x:auto; gap:15px; padding-bottom:15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"></div>
+                    </div>
+
+                    <div class="forecast-card" id="forecast-malapesquera" style="background:var(--color-gray-light);padding:2rem;border-radius:12px;border:1px solid var(--color-border); min-width: 0; overflow: hidden;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+                            <div><h3 style="margin:0 0 5px 0;font-size:1.5rem;">Playa Fuente de la Salud</h3><p style="color:#666;margin:0;font-size:0.95rem;">Previsión de oleaje — próximos 9 días</p></div>
+                            <a href="/malapesquera" style="background:var(--color-black);color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;display:inline-block;">Ver página del spot</a>
+                        </div>
+                        <div id="forecast-malapesquera-days" style="display:flex; overflow-x:auto; gap:15px; padding-bottom:15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"></div>
+                    </div>
+
+                    <div class="forecast-card" id="forecast-malagueta" style="background:var(--color-gray-light);padding:2rem;border-radius:12px;border:1px solid var(--color-border); min-width: 0; overflow: hidden;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+                            <div><h3 style="margin:0 0 5px 0;font-size:1.5rem;">La Malagueta</h3><p style="color:#666;margin:0;font-size:0.95rem;">Previsión de oleaje — próximos 9 días</p></div>
+                            <a href="/malagueta" style="background:var(--color-black);color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;display:inline-block;">Ver página del spot</a>
+                        </div>
+                        <div id="forecast-malagueta-days" style="display:flex; overflow-x:auto; gap:15px; padding-bottom:15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"></div>
+                    </div>
+
+                    <div class="forecast-card" id="forecast-bajondillo" style="background:var(--color-gray-light);padding:2rem;border-radius:12px;border:1px solid var(--color-border); min-width: 0; overflow: hidden;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+                            <div><h3 style="margin:0 0 5px 0;font-size:1.5rem;">El Bajondillo</h3><p style="color:#666;margin:0;font-size:0.95rem;">Previsión de oleaje — próximos 9 días</p></div>
+                            <a href="/bajondillo" style="background:var(--color-black);color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;display:inline-block;">Ver página del spot</a>
+                        </div>
+                        <div id="forecast-bajondillo-days" style="display:flex; overflow-x:auto; gap:15px; padding-bottom:15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"></div>
+                    </div>
+
+                    <div class="forecast-card" id="forecast-alamos" style="background:var(--color-gray-light);padding:2rem;border-radius:12px;border:1px solid var(--color-border); min-width: 0; overflow: hidden;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+                            <div><h3 style="margin:0 0 5px 0;font-size:1.5rem;">Los Álamos</h3><p style="color:#666;margin:0;font-size:0.95rem;">Previsión de oleaje — próximos 9 días</p></div>
+                            <a href="/alamos" style="background:var(--color-black);color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;display:inline-block;">Ver página del spot</a>
+                        </div>
+                        <div id="forecast-alamos-days" style="display:flex; overflow-x:auto; gap:15px; padding-bottom:15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"></div>
+                    </div>
+
+                    <div class="forecast-card" id="forecast-benajarafe" style="background:var(--color-gray-light);padding:2rem;border-radius:12px;border:1px solid var(--color-border); min-width: 0; overflow: hidden;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+                            <div><h3 style="margin:0 0 5px 0;font-size:1.5rem;">Benajarafe</h3><p style="color:#666;margin:0;font-size:0.95rem;">Previsión de oleaje — próximos 9 días</p></div>
+                            <a href="/benajarafe" style="background:var(--color-black);color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;display:inline-block;">Ver página del spot</a>
+                        </div>
+                        <div id="forecast-benajarafe-days" style="display:flex; overflow-x:auto; gap:15px; padding-bottom:15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"></div>
+                    </div>
+
+                    <div class="forecast-card" id="forecast-nerja" style="background:var(--color-gray-light);padding:2rem;border-radius:12px;border:1px solid var(--color-border); min-width: 0; overflow: hidden;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+                            <div><h3 style="margin:0 0 5px 0;font-size:1.5rem;">Playa de Burriana</h3><p style="color:#666;margin:0;font-size:0.95rem;">Previsión de oleaje — próximos 9 días</p></div>
+                            <a href="/nerja" style="background:var(--color-black);color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;display:inline-block;">Ver página del spot</a>
+                        </div>
+                        <div id="forecast-nerja-days" style="display:flex; overflow-x:auto; gap:15px; padding-bottom:15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================================== -->
+        <!-- WEBCAMS VIEW                                            -->
+        <!-- ====================================================== -->
+        
+        <div id="view-camaras" class="view-section active">
+            <div class="camera-section" id="camera-misericordia">
+                <div class="video-header">
+                    <div><h2 class="video-title">Playa La Misericordia</h2><div class="video-location">Málaga Capital, Andalucía</div></div>
+                    <div>
+                        <div class="live-indicator" style="margin-bottom:8px;"><div class="pulse-dot"></div><span>EN DIRECTO</span></div>
+                        <a href="/misericordia" class="spot-link" style="font-size:0.8rem;font-weight:600;color:var(--color-black);text-decoration:none;border:1px solid #ccc;padding:4px 8px;border-radius:4px;display:inline-block;">Ver spot &rarr;</a>
+                    </div>
+                </div>
+                <div class="video-wrapper"><div class="video-inner"><video id="video-misericordia" controls muted playsinline preload="none"></video></div></div>
+            </div>
+
+            <div class="camera-section" id="camera-fuengirola">
+                <div class="video-header">
+                    <div><h2 class="video-title">Fuengirola — Los Boliches</h2><div class="video-location">Fuengirola, Andalucía</div></div>
+                    <div>
+                        <div class="live-indicator" style="margin-bottom:8px;"><div class="pulse-dot"></div><span>EN DIRECTO</span></div>
+                        <a href="/fuengirola" class="spot-link" style="font-size:0.8rem;font-weight:600;color:var(--color-black);text-decoration:none;border:1px solid #ccc;padding:4px 8px;border-radius:4px;display:inline-block;">Ver spot &rarr;</a>
+                    </div>
+                </div>
+                <div class="video-wrapper"><div class="video-inner"><video id="video-fuengirola" controls muted playsinline preload="none"></video></div></div>
+            </div>
+
+            <div class="camera-section" id="camera-malapesquera">
+                <div class="video-header">
+                    <div><h2 class="video-title">Playa Fuente de la Salud</h2><div class="video-location">Benalmádena, Andalucía</div></div>
+                    <div>
+                        <div class="live-indicator" style="margin-bottom:8px;"><div class="pulse-dot"></div><span>EN DIRECTO</span></div>
+                        <a href="/malapesquera" class="spot-link" style="font-size:0.8rem;font-weight:600;color:var(--color-black);text-decoration:none;border:1px solid #ccc;padding:4px 8px;border-radius:4px;display:inline-block;">Ver spot &rarr;</a>
+                    </div>
+                </div>
+                <div class="video-wrapper"><div class="video-inner"><video id="video-malapesquera" controls muted playsinline preload="none"></video></div></div>
+            </div>
+
+            <div class="camera-section" id="camera-malagueta">
+                <div class="video-header">
+                    <div><h2 class="video-title">La Malagueta</h2><div class="video-location">Málaga Capital, Andalucía</div></div>
+                    <div>
+                        <div class="live-indicator" style="margin-bottom:8px;"><div class="pulse-dot"></div><span>EN DIRECTO</span></div>
+                        <a href="/malagueta" class="spot-link" style="font-size:0.8rem;font-weight:600;color:var(--color-black);text-decoration:none;border:1px solid #ccc;padding:4px 8px;border-radius:4px;display:inline-block;">Ver spot &rarr;</a>
+                    </div>
+                </div>
+                <div class="video-wrapper"><div class="video-inner"><video id="video-malagueta" controls muted playsinline preload="none"></video></div></div>
+            </div>
+
+            <div class="camera-section" id="camera-bajondillo">
+                <div class="video-header">
+                    <div><h2 class="video-title">El Bajondillo</h2><div class="video-location">Torremolinos, Andalucía</div></div>
+                    <div>
+                        <div class="live-indicator" style="margin-bottom:8px;"><div class="pulse-dot"></div><span>EN DIRECTO</span></div>
+                        <a href="/bajondillo" class="spot-link" style="font-size:0.8rem;font-weight:600;color:var(--color-black);text-decoration:none;border:1px solid #ccc;padding:4px 8px;border-radius:4px;display:inline-block;">Ver spot &rarr;</a>
+                    </div>
+                </div>
+                <div class="video-wrapper"><div class="video-inner"><video id="video-bajondillo" controls muted playsinline preload="none"></video></div></div>
+            </div>
+
+            <div class="camera-section" id="camera-nerja">
+                <div class="video-header">
+                    <div><h2 class="video-title">Playa de Burriana</h2><div class="video-location">Nerja, Andalucía</div></div>
+                    <div>
+                        <div class="live-indicator" style="margin-bottom:8px;"><div class="pulse-dot"></div><span>EN DIRECTO</span></div>
+                        <a href="/nerja" class="spot-link" style="font-size:0.8rem;font-weight:600;color:var(--color-black);text-decoration:none;border:1px solid #ccc;padding:4px 8px;border-radius:4px;display:inline-block;">Ver spot &rarr;</a>
+                    </div>
+                </div>
+                <div class="video-wrapper"><div class="video-inner"><video id="video-nerja" controls muted playsinline preload="none"></video></div></div>
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <h3>COSTASURF CAMS</h3>
+        <p class="tagline">Tu ventana en directo a las mejores olas de Málaga.</p>
+        <a class="tagline" style="display:block; margin-bottom: 0;">Webcams powered by Meteo360</a>
+        <a class="powered-by" href="https://open-meteo.com" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+            Forecast powered by Open-Meteo Marine API
+        </a>
+    
+        <div style="margin-top:20px; font-size:0.8rem; display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
+            <a href="/info" style="color:#aaa; text-decoration:none;">Info</a>
+            <a href="/legal.html#aviso" style="color:#aaa; text-decoration:none;">Aviso Legal</a>
+            <a href="/legal.html#privacidad" style="color:#aaa; text-decoration:none;">Privacidad</a>
+            <a href="/legal.html#cookies" style="color:#aaa; text-decoration:none;">Política de Cookies</a>
+        </div>
+    </footer>
+
+
+    <!-- Auth Popup -->
+    <div id="auth-popup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+        <div style="background:#fff; padding:2rem; border-radius:12px; width:90%; max-width:400px; text-align:center; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+            <button type="button" class="auth-popup-close" aria-label="Cerrar" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#888;">&times;</button>
+            <h3 style="margin-top:0; font-size:1.5rem; font-weight:800;">¡Únete a CostaCam!</h3>
+            <p style="color:#666; margin-bottom:1.5rem;">Inicia sesión para guardar tus spots, <strong>recibir alertas de olas por correo</strong> y acceder a todas las previsiones.</p>
+            <a href="/login" style="display:block; background:#111; color:#fff; text-decoration:none; padding:12px; border-radius:6px; font-weight:bold; margin-bottom:10px;">Iniciar Sesión</a>
+            <a href="/login?signup=true" style="display:block; background:#f7f7f7; color:#111; text-decoration:none; padding:12px; border-radius:6px; font-weight:bold; border:1px solid #eaeaea;">Crear Cuenta</a>
+        </div>
+    </div>
+
+
+
+    <!-- Cookie Banner -->
+    <div id="cookie-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(17,17,17,0.95); color:white; padding:15px 20px; z-index:10000; flex-direction:column; align-items:center; text-align:center; gap:10px; backdrop-filter:blur(10px);">
+        <div style="font-size:0.9rem;">
+            Utilizamos cookies propias para mantener tu sesión y preferencias. <a href="/legal.html#cookies" style="color:#007aff;text-decoration:underline;">Más información</a>.
+        </div>
+        <button type="button" id="cookie-accept" style="background:white; color:black; border:none; padding:8px 24px; border-radius:20px; font-weight:bold; cursor:pointer;">Aceptar</button>
+    </div>
+    <script src="/js/index.js?v=1"></script>
+</body>
+</html>
