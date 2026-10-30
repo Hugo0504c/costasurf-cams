@@ -310,7 +310,7 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://marine-api.open-meteo.com" crossorigin>
     <link rel="preconnect" href="https://dcndjvilqdzezlcbsnrh.supabase.co" crossorigin>
-    <script src="/common.js?v=26"></script>
+    <script src="/common.js?v=27"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js" integrity="sha384-dl/4LkSyQ4uEucc48NM6VDZLAjLLq9yMzZ5JLXumBq7Ld33XBof73hseOqPhO89+" crossorigin="anonymous" defer></script>
     <script src="/supabase-config.js?v=7" defer></script>
 </head>
@@ -462,6 +462,10 @@
             </summary>
             <div class="tool-body map-root">
                 <div class="map-days" id="map-days"></div>
+                <div class="map-days" id="map-area" role="group" aria-label="Zona del mapa">
+                    <button type="button" data-area="malaga" class="active">Málaga</button>
+                    <button type="button" data-area="all">Con spots cercanos (Cádiz y Granada)</button>
+                </div>
                 <div class="map-canvas" id="map-canvas" role="region" aria-label="Mapa de spots"></div>
                 <div class="map-legend" id="map-legend"></div>
                 <div id="map-extra"></div>
@@ -710,6 +714,7 @@
                         <div class="adv-chips">
                             <label class="adv-chip" id="flt-favs-chip"><input type="checkbox" id="flt-favs"><span><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.1em"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> <span>Solo favoritos</span></span></label>
                             <label class="adv-chip"><input type="checkbox" id="flt-cams"><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> <span>Solo con webcam</span></span></label>
+                            <label class="adv-chip"><input type="checkbox" id="flt-malaga"><span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.1em"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> <span>En Málaga</span></span></label>
                         </div>
                         <div class="flt-hint" id="flt-favs-hint" style="display:none;"></div>
                     </div>
@@ -742,7 +747,7 @@
     <footer>
         <h3>COSTASURF CAMS</h3>
         <p class="tagline">Tu ventana en directo a las mejores olas de Málaga.</p>
-        <a class="tagline" style="display:block; margin-bottom: 0;">Webcams: meteo365 y Windy.com</a>
+        <a class="tagline" style="display:block; margin-bottom: 0;">Webcams: meteo365, Windy.com y 9 Pies Escuela de Surf</a>
         <a class="powered-by" href="https://open-meteo.com" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
             Forecast powered by Open-Meteo Marine API
@@ -755,6 +760,6 @@
         </div>
     </footer>
 
-    <script src="/js/herramientas.js?v=9"></script>
+    <script src="/js/herramientas.js?v=10"></script>
 </body>
 </html>

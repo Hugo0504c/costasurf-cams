@@ -6,7 +6,7 @@ const SPOT_COLORS = {
     misericordia: '#2563eb', fuengirola: '#dc2626', malapesquera: '#16a34a',
     malagueta: '#9333ea', bajondillo: '#ea580c', nerja: '#0891b2',
     alamos: '#db2777', cabopino: '#ca8a04', benajarafe: '#475569',
-    torredelmar: '#0f766e'
+    torredelmar: '#0f766e', elpalmar: '#b45309', puntadelrio: '#7c3aed'
 };
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']; // week starts on Monday
 const FIRST_HOUR = 7, LAST_HOUR = 19; // daylight hours used for the daily wave range
@@ -1151,7 +1151,15 @@ async function initMap() {
             .addTo(map);
         mapState.markers[id] = marker;
     });
-    map.fitBounds(L.latLngBounds(Object.values(SPOTS).map(s => [s.lat, s.lon])), { padding: [36, 36] });
+    // Framed on the Málaga spots (the popular spots near Málaga are far enough to squeeze them into a corner);
+    // the "Con spots cercanos" button frames every spot. The pins of the near spots are on the map either way.
+    const fitArea = area => {
+        const spots = Object.values(SPOTS).filter(s => area === 'all' || !s.near);
+        map.fitBounds(L.latLngBounds(spots.map(s => [s.lat, s.lon])), { padding: [36, 36] });
+        document.querySelectorAll('#map-area button').forEach(b => b.classList.toggle('active', b.dataset.area === area));
+    };
+    document.querySelectorAll('#map-area button').forEach(b => b.addEventListener('click', () => fitArea(b.dataset.area)));
+    fitArea('malaga');
     spreadPins(L);
     map.on('zoomend', () => spreadPins(L));
 
@@ -1215,6 +1223,7 @@ const fltInputs = {
     maxWind: document.getElementById('flt-max-wind'),
     favs: document.getElementById('flt-favs'),
     cams: document.getElementById('flt-cams'),
+    malaga: document.getElementById('flt-malaga'), // only spots in the province of Málaga (leaves out SPOTS[id].near)
     sort: document.getElementById('flt-sort')
 };
 const fltWindTypes = [...document.querySelectorAll('#flt-wind-types input')];
@@ -1266,7 +1275,8 @@ function fltFilters() {
         // Chosen bands; empty = any hour
         bands: fltBands.filter(i => i.checked && i.value !== 'any').map(i => i.value),
         favsOnly: fltInputs.favs.checked,
-        camsOnly: fltInputs.cams.checked
+        camsOnly: fltInputs.cams.checked,
+        malagaOnly: fltInputs.malaga.checked
     };
 }
 
@@ -1305,6 +1315,7 @@ const inBands = (hour, bands) => !bands.length || bands.some(b => hour >= FLT_BA
 function evaluateSpot(id, f) {
     if (f.favsOnly && !fltState.favs.includes(id)) return { match: false, reason: 'No es favorito' };
     if (f.camsOnly && !SPOTS[id].cam) return { match: false, reason: 'Sin webcam' };
+    if (f.malagaOnly && SPOTS[id].near) return { match: false, reason: 'Fuera de Málaga' };
     const hours = fltSelectedDates().flatMap(date => (fltState.data[id][date] || []).filter(h => inBands(h.hour, f.bands)));
     if (!hours.length) return { match: false, reason: 'Sin datos' };
     const matches = hours.filter(h => FLT_CHECKS.every(c => c.test(h, f)));
@@ -1396,6 +1407,7 @@ function resetFilter() {
     fltBands.forEach(i => { i.checked = i.value === 'any'; });
     fltInputs.favs.checked = false;
     fltInputs.cams.checked = false;
+    fltInputs.malaga.checked = false;
     fltInputs.sort.value = 'score';
     if (fltState) fltState.days = new Set([0]);
     renderFilter();
@@ -1445,6 +1457,7 @@ function fltActiveFilters() {
     if (bands.length) list.push({ text: bands.map(b => FLT_BAND_NAMES[b]).join(', '), undo: () => fltBands.forEach(i => { i.checked = i.value === 'any'; }) });
     if (fltInputs.favs.checked) list.push({ text: 'Solo favoritos', undo: () => { fltInputs.favs.checked = false; } });
     if (fltInputs.cams.checked) list.push({ text: 'Solo con webcam', undo: () => { fltInputs.cams.checked = false; } });
+    if (fltInputs.malaga.checked) list.push({ text: 'En Málaga', undo: () => { fltInputs.malaga.checked = false; } });
     return list;
 }
 
@@ -1537,7 +1550,7 @@ async function initFilter() {
 }
 
 [fltInputs.minSize, fltInputs.maxSize, fltInputs.minEnergy, fltInputs.maxEnergy, fltInputs.minPeriod, fltInputs.maxWind].forEach(el => el.addEventListener('input', renderFilter));
-[...fltWindTypes, ...fltBands, fltInputs.favs, fltInputs.cams, fltInputs.sort].forEach(el => el.addEventListener('change', renderFilter));
+[...fltWindTypes, ...fltBands, fltInputs.favs, fltInputs.cams, fltInputs.malaga, fltInputs.sort].forEach(el => el.addEventListener('change', renderFilter));
 document.getElementById('flt-reset').addEventListener('click', resetFilter);
 updateFltLabels();
 

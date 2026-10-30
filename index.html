@@ -55,6 +55,13 @@
 
         .camera-section { width: 100%; max-width: 1000px; margin: 0 auto; }
 
+        /* "Spots populares cerca": spots outside the province of Málaga, after the Málaga ones */
+        .near-group { width: 100%; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 4rem; }
+        .near-heading { border-top: 1px solid var(--color-border); padding-top: 2.5rem; }
+        .near-heading h2 { font-size: 1.8rem; font-weight: 800; margin: 0 0 6px 0; }
+        .near-heading p { color: #666; margin: 0; font-size: 1rem; }
+        #near-forecast { display: flex; flex-direction: column; gap: 3rem; margin-top: 3rem; order: 1; }
+
         .video-header {
             width: 100%;
             display: flex;
@@ -182,7 +189,7 @@
     <link rel="preconnect" href="https://marine-api.open-meteo.com" crossorigin>
     <link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
     <link rel="preconnect" href="https://dcndjvilqdzezlcbsnrh.supabase.co" crossorigin>
-    <script src="/common.js?v=26"></script>
+    <script src="/common.js?v=27"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js" integrity="sha384-dl/4LkSyQ4uEucc48NM6VDZLAjLLq9yMzZ5JLXumBq7Ld33XBof73hseOqPhO89+" crossorigin="anonymous" defer></script>
     <script src="/supabase-config.js?v=7" defer></script>
 </head>
@@ -296,6 +303,30 @@
                     </div>
 
                 </div>
+
+                <!-- Popular spots near Málaga (SPOTS[id].near) -->
+                <div id="near-forecast">
+                    <div class="near-heading">
+                        <h2>Spots populares cerca</h2>
+                        <p>Fuera de la provincia de Málaga: Cádiz y Granada.</p>
+                    </div>
+
+                    <div class="forecast-card" id="forecast-elpalmar" style="background:var(--color-gray-light);padding:2rem;border-radius:12px;border:1px solid var(--color-border); min-width: 0; overflow: hidden;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+                            <div><h3 style="margin:0 0 5px 0;font-size:1.5rem;">El Palmar — Vejer</h3><p style="color:#666;margin:0;font-size:0.95rem;">Previsión de oleaje — próximos 9 días</p></div>
+                            <a href="/elpalmar" style="background:var(--color-black);color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;display:inline-block;">Ver página del spot</a>
+                        </div>
+                        <div id="forecast-elpalmar-days" style="display:flex; overflow-x:auto; gap:15px; padding-bottom:15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"></div>
+                    </div>
+
+                    <div class="forecast-card" id="forecast-puntadelrio" style="background:var(--color-gray-light);padding:2rem;border-radius:12px;border:1px solid var(--color-border); min-width: 0; overflow: hidden;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+                            <div><h3 style="margin:0 0 5px 0;font-size:1.5rem;">Punta del Río — Salobreña</h3><p style="color:#666;margin:0;font-size:0.95rem;">Previsión de oleaje — próximos 9 días</p></div>
+                            <a href="/puntadelrio" style="background:var(--color-black);color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600;display:inline-block;">Ver página del spot</a>
+                        </div>
+                        <div id="forecast-puntadelrio-days" style="display:flex; overflow-x:auto; gap:15px; padding-bottom:15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -380,6 +411,25 @@
                 </div>
                 <div class="video-wrapper"><div class="video-inner" data-cam="torredelmar"></div></div>
             </div>
+
+            <!-- Popular spots near Málaga that have a webcam (SPOTS[id].near) -->
+            <div class="near-group" id="near-cams">
+                <div class="near-heading">
+                    <h2>Spots populares cerca</h2>
+                    <p>Fuera de la provincia de Málaga: Cádiz y Granada.</p>
+                </div>
+
+                <div class="camera-section" id="camera-elpalmar">
+                    <div class="video-header">
+                        <div><h2 class="video-title">El Palmar — Vejer</h2><div class="video-location">Vejer de la Frontera, Cádiz</div></div>
+                        <div>
+                            <div class="live-indicator" style="margin-bottom:8px;"><div class="pulse-dot"></div><span>EN DIRECTO</span></div>
+                            <a href="/elpalmar" class="spot-link" style="font-size:0.8rem;font-weight:600;color:var(--color-black);text-decoration:none;border:1px solid #ccc;padding:4px 8px;border-radius:4px;display:inline-block;">Ver spot &rarr;</a>
+                        </div>
+                    </div>
+                    <div class="video-wrapper"><div class="video-inner" data-cam="elpalmar"></div></div>
+                </div>
+            </div>
         </div>
 
 
@@ -389,7 +439,7 @@
     <footer>
         <h3>COSTASURF CAMS</h3>
         <p class="tagline">Tu ventana en directo a las mejores olas de Málaga.</p>
-        <a class="tagline" style="display:block; margin-bottom: 0;">Webcams: meteo365 y Windy.com</a>
+        <a class="tagline" style="display:block; margin-bottom: 0;">Webcams: meteo365, Windy.com y 9 Pies Escuela de Surf</a>
         <a class="powered-by" href="https://open-meteo.com" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
             Forecast powered by Open-Meteo Marine API
@@ -417,6 +467,6 @@
 
 
 
-    <script src="/js/index.js?v=4"></script>
+    <script src="/js/index.js?v=5"></script>
 </body>
 </html>

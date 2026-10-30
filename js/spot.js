@@ -60,7 +60,7 @@ function renderGuide(g, guides) {
 
         ${section('thermometer', L.agua, `
             <div class="guide-water">
-                ${guides.agua.map(([season, temp, suit]) => `
+                ${(g.agua || guides.agua).map(([season, temp, suit]) => `
                     <div class="guide-water-row">
                         <div class="guide-water-season">${season}</div>
                         <div class="guide-water-temp">${temp}</div>

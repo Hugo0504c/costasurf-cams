@@ -21,6 +21,7 @@ window.SPOT_GUIDES = {
         cercanos: 'Spots cercanos',
         aviso: 'Información orientativa. El mar cambia cada día: comprueba siempre las condiciones en la playa y no entres si no te ves seguro.'
     },
+    // Mediterranean (Málaga). A spot can bring its own table with an `agua` field (El Palmar: Atlantic).
     agua: [
         ['Invierno (dic–mar)', '14–16 °C', 'Neopreno 4/3 mm; escarpines si eres friolero'],
         ['Primavera (abr–jun)', '16–20 °C', 'Neopreno 3/2 mm'],
@@ -405,6 +406,87 @@ window.SPOT_GUIDES = {
             ],
             escuelas: 'Centros de alquiler de Kayak y SUP en Burriana; algunos ofrecen tablas de surf (corchopanes).',
             cercanos: ['torredelmar', 'benajarafe']
+        },
+
+        // ── Popular spots near Málaga (SPOTS[id].near) ──
+        elpalmar: {
+            tipo: 'Beach Break', fondo: 'Arena', nivel: 'Todos los niveles', afluencia: 'Alta',
+            ola: 'Picos de arena a lo largo de una playa abierta al Atlántico', swell: 'Atlántico del O–SO', viento: 'Levante (E) o sin viento', temporada: 'Otoño a primavera',
+            desc: [
+                'Uno de los spots más conocidos del sur de España. Es una playa atlántica muy larga y casi virgen en la costa de Vejer de la Frontera (Cádiz), con picos de arena repartidos a lo largo de varios kilómetros y mucha más consistencia que el Mediterráneo: con temporal, las olas pueden llegar a los tres metros.',
+                'Mira al oeste-suroeste, así que recibe de lleno el mar de fondo del Atlántico. Lo que en Málaga es el viento malo, el Levante, aquí sopla desde tierra y deja la ola limpia. Está a unos 220 km de Málaga: es un plan de día completo o de fin de semana.'
+            ],
+            condiciones: {
+                swell: 'Mar de fondo atlántico del oeste o suroeste, que entra casi todo el año fuera del verano.',
+                viento: 'Levante (este) suave o calma. El Poniente sopla de mar y la estropea; con Levante muy fuerte, el viento levanta mucha arena.',
+                marea: 'Sí cuenta: es el Atlántico. Los bancos de arena cambian con la marea, así que conviene mirar la tabla de mareas y probar a distintas horas.',
+                tamano: 'De 0,5 a 2 m para la mayoría; con más tamaño, solo para surfistas con experiencia.',
+                momento: 'Otoño, invierno y primavera. En verano las olas suelen ser pequeñas, mejor con tabla grande o longboard.'
+            },
+            peligros: [
+                'Corrientes de retorno entre los bancos de arena, sobre todo con mar grande: si te arrastra, rema en paralelo a la orilla.',
+                'Mucha gente en el agua los días buenos y en vacaciones, con escuelas en la zona de espuma: respeta las prioridades.',
+                'Con mar grande la ola rompe con fuerza: no entres por encima de tu nivel.'
+            ],
+            acceso: [
+                'Desde Málaga, por la A-7 hasta Algeciras y la N-340 hacia Vejer de la Frontera (unos 220 km).',
+                'El Palmar está entre Conil y Zahora; la playa sigue toda la carretera de la costa.',
+                'Aparcamiento junto a la playa; en verano se llena pronto.'
+            ],
+            servicios: [
+                'Escuelas de surf, alquiler de material y surfcamps a lo largo de la playa.',
+                'Chiringuitos, bares y alojamientos en El Palmar; tiendas y más servicios en Conil y Vejer.'
+            ],
+            consejos: [
+                'Mira la webcam de 9 Pies antes de hacer el viaje: desde Málaga son más de dos horas.',
+                'Los días de Levante, cuando en la Costa del Sol el mar está picado, aquí suele estar limpio.',
+                'Si hay mucha gente, camina por la playa: es tan larga que siempre hay picos con menos gente.'
+            ],
+            // Atlantic: colder than Málaga, and the Levante (offshore here) brings up cold water even in summer
+            agua: [
+                ['Invierno (dic–mar)', '14–16 °C', 'Neopreno 4/3 mm y escarpines'],
+                ['Primavera (abr–jun)', '15–18 °C', 'Neopreno 4/3 o 3/2 mm'],
+                ['Verano (jul–sep)', '18–22 °C', 'Neopreno 3/2 o shorty. Ojo: con Levante el agua se enfría de golpe'],
+                ['Otoño (oct–nov)', '17–20 °C', 'Neopreno 3/2 mm']
+            ],
+            escuelas: `Hay muchas escuelas y surfcamps en El Palmar. Una de ellas, <a href="https://www.escueladesurf9pies.com/es/webcam-el-palmar" target="_blank" ${SCHOOL_LINK}>9 Pies Escuela de Surf</a>, es la que emite la webcam del spot.`,
+            cercanos: []
+        },
+        puntadelrio: {
+            tipo: 'Beach Break / desembocadura', fondo: 'Arena oscura y grava', nivel: 'Iniciación / Intermedio', afluencia: 'Baja',
+            ola: 'Picos junto a la desembocadura del Guadalfeo', swell: 'Poniente (O–SO) y Levante (E–SE)', viento: 'Terral (N) o sin viento', temporada: 'Otoño a primavera',
+            desc: [
+                'El spot de surf más conocido de la costa de Granada (la Costa Tropical). Está en Salobreña, junto a la desembocadura del río Guadalfeo: una playa de 1,2 km de arena oscura y grava, apartada del núcleo urbano y con poca gente.',
+                'A diferencia de casi toda la costa de Málaga, funciona con Poniente y también con Levante, con olas de hasta metro y medio de forma habitual. Está a menos de 100 km de Málaga, al este de Nerja y Almuñécar.'
+            ],
+            condiciones: {
+                swell: 'Poniente del oeste-suroeste, que es cuando mejor rompe, y también Levante del este.',
+                viento: 'Terral (norte) o calma. Con el viento de mar soplando fuerte se pica.',
+                marea: 'Poco relevante (Mediterráneo).',
+                tamano: 'De 0,5 a 1,5 m.',
+                momento: 'Cuando entra un temporal de Poniente o de Levante y el viento todavía no ha subido, a primera hora.'
+            },
+            peligros: [
+                'Corriente en la desembocadura del río, más fuerte cuando el Guadalfeo baja con agua: no te dejes llevar hacia las rocas ni hacia la boca del río.',
+                'Grava y cantos en la orilla: cuidado al entrar y salir, mejor con escarpines.',
+                'Poca profundidad en algunas zonas: cae de plano.'
+            ],
+            acceso: [
+                'Desde Málaga, por la A-7 hacia Almería, salida de Salobreña (menos de 100 km).',
+                'La playa está a las afueras de Salobreña, junto a la desembocadura del Guadalfeo; se llega andando sin dificultad.',
+                'Aparcamiento en las inmediaciones de la playa.'
+            ],
+            servicios: [
+                'Pocos servicios en la propia playa: es una zona apartada.',
+                'Bares, restaurantes y tiendas en Salobreña, a pocos minutos.'
+            ],
+            consejos: [
+                'Si en Málaga no entra el Poniente, mira aquí: la costa de Granada lo recibe mejor.',
+                'Lleva escarpines y algo de beber: hay pocos servicios en la playa.',
+                'No tiene webcam: mira la previsión de olas y viento antes de salir.'
+            ],
+            escuelas: 'En la zona hay clubes y escuelas de surf de la Costa Tropical; pregunta en Salobreña o en Motril por alquiler de material y clases.',
+            cercanos: ['nerja']
         }
     }
 };

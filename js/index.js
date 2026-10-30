@@ -15,7 +15,8 @@ function switchTab(tabId) {
 // ── Webcams: latest snapshot + link to the live cam ────────────
 document.querySelectorAll('#view-camaras [data-cam]').forEach(box => attachCam(box, SPOTS[box.dataset.cam]));
 
-// Logged in: the cams of the user's favourite spots first, tagged "Favorito" (the rest keep their order).
+// Logged in: the cams of the user's favourite spots first, tagged "Favorito" (the rest keep their order). Each group
+// is sorted on its own: the Málaga cams stay above the "Spots populares cerca" group, and its cams stay inside it.
 // Supabase loads with `defer`, so it is ready once the DOM is.
 onReady(async () => {
     if (!window.supabaseClient) return;
@@ -24,10 +25,14 @@ onReady(async () => {
     const { data, error } = await window.supabaseClient.from('favorites').select('spot_id').eq('user_id', session.user.id);
     if (error || !data || !data.length) return;
     const favs = new Set(data.map(f => f.spot_id));
-    const view = document.getElementById('view-camaras');
-    const sections = [...view.querySelectorAll(':scope > .camera-section')];
     const isFav = s => favs.has(s.id.replace('camera-', ''));
-    [...sections.filter(isFav), ...sections.filter(s => !isFav(s))].forEach(s => view.appendChild(s));
+    const nearGroup = document.getElementById('near-cams');
+    const sections = [];
+    [[document.getElementById('view-camaras'), nearGroup], [nearGroup, null]].forEach(([box, before]) => {
+        const group = [...box.querySelectorAll(':scope > .camera-section')];
+        [...group.filter(isFav), ...group.filter(s => !isFav(s))].forEach(s => box.insertBefore(s, before));
+        sections.push(...group);
+    });
     sections.filter(isFav).forEach(s => {
         const tag = document.createElement('span');
         tag.className = 'fav-tag';

@@ -18,11 +18,18 @@ const SPOTS = {
     'benajarafe':   { lat: 36.743, lon: -4.121, facing: 169, name: 'Benajarafe — Vélez-Málaga', loc: 'Vélez-Málaga' },
     // Andalucía Live's cam; its photos reach us through Windy (camLink = the provider's own page, for the button)
     'torredelmar':  { lat: 36.738, lon: -4.094, facing: 131, name: 'Torre del Mar — Vélez-Málaga', loc: 'Vélez-Málaga', cam: 'windy:1689408949',
-                      camLink: 'https://www.andalucialive.com/2023/01/12/webcam-velez-malaga-1-malaga-playa-torre-del-mar/', camBy: 'Andalucía Live' }
+                      camLink: 'https://www.andalucialive.com/2023/01/12/webcam-velez-malaga-1-malaga-playa-torre-del-mar/', camBy: 'Andalucía Live' },
+
+    // ── Popular spots near Málaga (near: true): their own section in Webcams/Forecast, and "Solo en Málaga" in the
+    // spot filter leaves them out. cam 'external' = a cam we only link to (its owner shows it on their own site; we
+    // don't have permission to show its picture here), so the card is just a button to camLink.
+    'elpalmar':     { lat: 36.2253, lon: -6.0662, facing: 240, name: 'El Palmar — Vejer', loc: 'Vejer de la Frontera (Cádiz)', near: true,
+                      cam: 'external', camLink: 'https://www.escueladesurf9pies.com/es/webcam-el-palmar', camBy: '9 Pies Escuela de Surf' },
+    'puntadelrio':  { lat: 36.7219, lon: -3.5710, facing: 206, name: 'Punta del Río — Salobreña', loc: 'Salobreña (Granada)', near: true }
 };
 
 // Other URLs for a spot (path -> id), e.g. /fuente-de-la-salud for the spot saved as 'malapesquera'
-const SPOT_ALIASES = { 'fuente-de-la-salud': 'malapesquera', 'torre-del-mar': 'torredelmar' };
+const SPOT_ALIASES = { 'fuente-de-la-salud': 'malapesquera', 'torre-del-mar': 'torredelmar', 'el-palmar': 'elpalmar', 'punta-del-rio': 'puntadelrio' };
 
 // Speed in km/h, dir = where the wind blows FROM. `facing` = compass direction the beach looks out to sea
 // (SPOTS[id].facing). Wind from the land (within 45° of facing + 180) is off-shore; from the sea, on-shore.
@@ -142,7 +149,7 @@ function addCamStyles() {
         .cam-poster { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; display: block; z-index: 1; }
         .cam-play.has-poster { background: linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.45)); }
         .cam-play-note { display: none; font-size: 12px; font-weight: 600; opacity: 0.9; }
-        .cam-play.has-poster .cam-play-note { display: block; }
+        .cam-play.has-poster .cam-play-note, .cam-play.no-poster .cam-play-note { display: block; }
         .cam-credit { position: absolute; right: 8px; bottom: 8px; z-index: 12; background: rgba(0,0,0,0.6); color: #fff; font: 600 11px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 4px 8px; border-radius: 10px; text-decoration: none; }
         .cam-credit:hover { background: rgba(0,0,0,0.85); }`;
     document.head.appendChild(style);
@@ -153,6 +160,12 @@ function addCamStyles() {
 //  · Windy: latest photo straight from Windy (they take a photo every few minutes); the button opens the cam on
 //    Windy.com (photos + timelapse). Windy's terms ask for a visible credit and a link to the cam, hence `credit`.
 function camInfo(spot) {
+    //  · external: no picture (the owner only shows it on their site); the button opens the cam there
+    if (spot.cam === 'external') {
+        return { snap: null, page: spot.camLink, label: 'Ver en directo', badge: 'EN DIRECTO',
+            title: `Ver la webcam en directo en la web de ${spot.camBy} (se abre en una pestaña nueva)`,
+            note: `En la web de ${spot.camBy}`, credit: `Webcam: ${spot.camBy}`, creditLink: spot.camLink };
+    }
     if (spot.cam.startsWith('windy:')) {
         const id = spot.cam.slice(6);
         const windyPage = `https://www.windy.com/webcams/${id}`;
@@ -165,6 +178,18 @@ function camInfo(spot) {
     const [host, name] = spot.cam.split('/');
     return { snap: `/proxy/${host}/snap/${name}.webp`, page: `https://meteo365.es/es/livecams/${spot.camPage}.php`,
         label: 'Ver en directo', badge: 'EN DIRECTO', title: 'Ver la webcam en directo en meteo365.es (se abre en una pestaña nueva)', credit: null };
+}
+
+// "Webcam: <owner>" link in the corner of a cam box, when the cam belongs to someone else
+function addCredit(wrapper, info) {
+    if (!info.credit) return;
+    const credit = document.createElement('a');
+    credit.className = 'cam-credit';
+    credit.href = info.creditLink || info.page;
+    credit.target = '_blank';
+    credit.rel = 'noopener';
+    credit.textContent = info.credit;
+    wrapper.appendChild(credit);
 }
 
 // Fills a 16:9 cam box with the cam's latest picture and a button to the cam's own page (see camInfo)
@@ -182,8 +207,15 @@ function attachCam(wrapper, spot) {
     play.title = info.title;
     play.innerHTML = `<span class="cam-play-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>`
         + `<span class="cam-play-text">${info.label}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>`
-        + `<span class="cam-play-note">Imagen de hace unos minutos</span>`;
+        + `<span class="cam-play-note"></span>`;
+    play.querySelector('.cam-play-note').textContent = info.note || 'Imagen de hace unos minutos';
     wrapper.appendChild(play);
+    if (!snapUrl) {
+        // No picture to show (external cam): just the button, with its note always visible, and the credit
+        play.classList.add('no-poster');
+        addCredit(wrapper, info);
+        return;
+    }
 
     // Recent snapshot behind the play button (meteo365 refreshes it every minute; our proxy and the CDN keep it up to
     // 15 min), so visitors see what the beach looks like. Lazy: only loaded near the screen.
@@ -196,15 +228,7 @@ function attachCam(wrapper, spot) {
     poster.addEventListener('error', () => { poster.remove(); play.classList.remove('has-poster'); });
     poster.src = snapUrl;
     wrapper.insertBefore(poster, play);
-    if (info.credit) {
-        const credit = document.createElement('a');
-        credit.className = 'cam-credit';
-        credit.href = info.creditLink || info.page;
-        credit.target = '_blank';
-        credit.rel = 'noopener';
-        credit.textContent = info.credit;
-        wrapper.appendChild(credit);
-    }
+    addCredit(wrapper, info);
 
     // Coming back to the page after a while (e.g. from the live cam's tab) shows a fresh snapshot. ?t= changes every
     // 10 min and is the same for every visitor, so the CDN still answers most of them from its cache.
