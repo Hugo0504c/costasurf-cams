@@ -143,6 +143,31 @@
             .btn-order { margin: 0 0 1.25rem 0; }
         }
 
+        /* Wetsuit advisor */
+        .ws-root .modern-select { margin-bottom: 1rem; }
+        .ws-conds { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+        .ws-cond { background: #f7f7f7; border-radius: 10px; padding: 10px 12px; }
+        .ws-cond span { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #777; }
+        .ws-cond strong { display: block; font-size: 1.15rem; margin-top: 2px; }
+        .ws-cond em { display: block; font-style: normal; font-size: 0.75rem; color: #888; }
+        .ws-cond.feel { background: #111; color: #fff; }
+        .ws-cond.feel span, .ws-cond.feel em { color: #bbb; }
+        .ws-verdict { font-size: 1.05rem; margin: 0 0 0.75rem 0; }
+        .ws-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+        .ws-item { display: flex; align-items: center; gap: 12px; border: 1px solid var(--color-border); border-radius: 10px; padding: 12px 14px; }
+        .ws-item.best { border: 2px solid #111; }
+        .ws-name { font-weight: 800; }
+        .ws-tag { display: inline-block; margin-left: 6px; vertical-align: middle; font-size: 0.68rem; font-weight: 700; background: #111; color: #fff; padding: 2px 8px; border-radius: 20px; }
+        .ws-note { font-size: 0.82rem; color: #666; margin-top: 2px; }
+        .ws-stars { margin-left: auto; display: flex; gap: 2px; color: #111; flex-shrink: 0; }
+        .ws-star { position: relative; display: block; width: 18px; height: 18px; }
+        .ws-star > svg, .ws-star-fill svg { position: absolute; left: 0; top: 0; }
+        .ws-star-fill { position: absolute; left: 0; top: 0; height: 100%; width: 0; overflow: hidden; }
+        .ws-star-fill.full { width: 100%; }
+        .ws-star-fill.half { width: 50%; }
+        .ws-hint { margin: 1rem 0 0 0; font-size: 0.82rem; color: #666; line-height: 1.5; }
+        @media (max-width: 480px) { .ws-item { flex-direction: column; align-items: flex-start; gap: 8px; } .ws-stars { margin-left: 0; } }
+
         /* Spot map: same wave-size colours as the Forecast tab (flat gray → yellow → orange → blue) */
         .map-root { --wave-1: #888888; --wave-2: #ffcc00; --wave-3: #ff9500; --wave-4: #007aff; --wave-none: #d6d6d6; }
         .map-days { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
@@ -472,6 +497,28 @@
             </div>
         </details>
 
+        <details class="tool" id="tool-wetsuit">
+            <summary>
+                <div class="tool-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>
+                </div>
+                <div>
+                    <div class="tool-title">Qué neopreno llevo</div>
+                    <div class="tool-desc">Elige spot y día: puntuamos cada grosor de neopreno según el agua, el aire y el viento.</div>
+                </div>
+                <svg class="tool-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </summary>
+            <div class="tool-body ws-root">
+                <label class="alert-label" for="ws-spot">Spot</label>
+                <select id="ws-spot" class="modern-select"></select>
+                <span class="alert-label">Día</span>
+                <div class="map-days" id="ws-days" role="group" aria-label="Día"></div>
+                <div id="ws-content">
+                    <div class="cal-message">Cargando...</div>
+                </div>
+            </div>
+        </details>
+
         <details class="tool" id="tool-alerts">
             <summary>
                 <div class="tool-icon">
@@ -760,6 +807,6 @@
         </div>
     </footer>
 
-    <script src="/js/herramientas.js?v=10"></script>
+    <script src="/js/herramientas.js?v=11"></script>
 </body>
 </html>

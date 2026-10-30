@@ -467,7 +467,7 @@ async function loadAlerts() {
 onReady(() => loadAlerts().catch(err => console.error('Alerts error:', err)));
 
 // /herramientas#alertas (from the profile switch, or back from logging in) opens that tool and scrolls to it
-const TOOL_HASHES = { calendario: 'tool-calendar', filtrar: 'tool-filter', comparador: 'tool-compare', mapa: 'tool-map', alertas: 'tool-alerts', telegram: 'tool-telegram' };
+const TOOL_HASHES = { calendario: 'tool-calendar', filtrar: 'tool-filter', comparador: 'tool-compare', mapa: 'tool-map', alertas: 'tool-alerts', telegram: 'tool-telegram', neopreno: 'tool-wetsuit' };
 function openHashTool() {
     const tool = document.getElementById(TOOL_HASHES[window.location.hash.slice(1)]);
     if (!tool) return;
@@ -1559,6 +1559,152 @@ fltTool.addEventListener('toggle', () => {
     if (!fltTool.open || fltLoaded) return;
     fltLoaded = true;
     sessionReady.then(session => { if (session) initFilter(); }); // locked without an account
+});
+
+// ── Wetsuit advisor: water temperature, air and wind of one spot and day → every suit rated 1 to 5 stars ──
+// Each suit has the range of "felt" water temperature it's made for (usual surf shop charts). The felt temperature is
+// the water's, made colder by cold air and wind (you spend a lot of time sitting out of the water, wet) and slightly
+// warmer by warm air. A suit too thin loses stars faster than one too warm: being cold ends the session.
+const WS_SUITS = [
+    { name: 'Sin neopreno', note: 'Bañador y lycra para el sol y el roce de la tabla.', min: 23.5, max: 99 },
+    { name: 'Lycra térmica o top de 1–2 mm', note: 'Abriga el tronco y deja libres brazos y piernas.', min: 21.5, max: 24.5 },
+    { name: 'Shorty 2 mm', note: 'Manga y pierna cortas.', min: 19.5, max: 22.5 },
+    { name: 'Integral 3/2 mm', note: 'Manga y pierna largas: el traje de entretiempo.', min: 16.5, max: 20 },
+    { name: 'Integral 4/3 mm', note: 'Para agua fría; con escarpines si eres friolero.', min: 13.5, max: 17 },
+    { name: 'Integral 5/4 mm con escarpines', note: 'Agua muy fría; guantes si vas a estar mucho rato.', min: 10.5, max: 14 },
+    { name: 'Integral 6/5 mm con capucha, guantes y escarpines', note: 'Agua helada.', min: -5, max: 11 }
+];
+const WS_SHOWN = 4; // best options listed
+const wsTool = document.getElementById('tool-wetsuit');
+const wsSpot = document.getElementById('ws-spot');
+const wsDays = document.getElementById('ws-days');
+const wsContent = document.getElementById('ws-content');
+const wsCache = {};   // spotId -> { 'YYYY-MM-DD': { water: [], air: [], wind: [] } } (daylight hours)
+let wsDay = null;     // 'YYYY-MM-DD'
+let wsRequest = 0;    // ignores responses from an older selection
+
+Object.entries(SPOTS).forEach(([id, s]) => wsSpot.add(new Option(s.name, id)));
+
+async function fetchWetsuitData(id) {
+    if (wsCache[id]) return wsCache[id];
+    const { lat, lon } = SPOTS[id];
+    const [marine, weather] = await Promise.all([
+        getJson(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=sea_surface_temperature&timezone=auto&forecast_days=${FORECAST_DAYS}`),
+        getJson(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m&wind_speed_unit=kn&timezone=auto&forecast_days=${FORECAST_DAYS}`)
+    ]);
+    const byDay = {};
+    const airAt = {};
+    weather.hourly.time.forEach((tm, j) => { airAt[tm] = j; });
+    marine.hourly.time.forEach((tm, i) => {
+        const hour = +tm.slice(11, 13);
+        if (hour < FIRST_HOUR || hour > LAST_HOUR) return;
+        const day = byDay[tm.slice(0, 10)] || (byDay[tm.slice(0, 10)] = { water: [], air: [], wind: [] });
+        const j = airAt[tm];
+        if (marine.hourly.sea_surface_temperature[i] != null) day.water.push(marine.hourly.sea_surface_temperature[i]);
+        if (j != null && weather.hourly.temperature_2m[j] != null) day.air.push(weather.hourly.temperature_2m[j]);
+        if (j != null && weather.hourly.wind_speed_10m[j] != null) day.wind.push(weather.hourly.wind_speed_10m[j]);
+    });
+    return (wsCache[id] = byDay);
+}
+
+const wsMean = list => list.reduce((a, b) => a + b, 0) / list.length;
+
+// Felt water temperature: cold air takes off a quarter of each degree below the water, warm air adds a little,
+// wind over 8 kn takes off 0.1 °C per knot (at most 2.5)
+function wsFeel(water, air, wind) {
+    const airEffect = air < water ? (air - water) * 0.25 : Math.min(1, (air - water) * 0.15);
+    const windEffect = -Math.min(2.5, Math.max(0, wind - 8) * 0.1);
+    return water + Math.max(-4, airEffect + windEffect);
+}
+
+// 5 stars inside the suit's range; -1 star per °C colder than it's made for, per 1.75 °C warmer. Rounded to half stars.
+function wsScore(suit, feel) {
+    const tooCold = Math.max(0, suit.min - feel), tooWarm = Math.max(0, feel - suit.max);
+    return Math.min(5, Math.max(0.5, Math.round((5 - tooCold - tooWarm / 1.75) * 2) / 2));
+}
+
+function wsStars(score) {
+    const star = filled => `<svg width="18" height="18" viewBox="0 0 24 24" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS.star}</svg>`;
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+        const fill = score >= i ? 'full' : score >= i - 0.5 ? 'half' : '';
+        html += `<span class="ws-star">${star(false)}<span class="ws-star-fill ${fill}">${star(true)}</span></span>`;
+    }
+    const label = `${String(score).replace('.', ',')} de 5 estrellas`;
+    return `<span class="ws-stars" role="img" aria-label="${label}" title="${label}">${html}</span>`;
+}
+
+function buildWsDays(dates) {
+    wsDays.innerHTML = '';
+    dates.forEach((day, i) => {
+        const d = new Date(day + 'T12:00:00');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.day = day;
+        btn.textContent = i < 2 ? MAP_DAY_LABELS[i] : `${DAYS_SHORT[d.getDay()]} ${d.getDate()}`;
+        btn.addEventListener('click', () => { wsDay = day; renderWetsuit(); });
+        wsDays.appendChild(btn);
+    });
+}
+
+async function renderWetsuit() {
+    const id = wsSpot.value, req = ++wsRequest;
+    let data;
+    try {
+        data = await fetchWetsuitData(id);
+    } catch (err) {
+        console.error('Wetsuit error:', err);
+        if (req === wsRequest) wsContent.innerHTML = '<div class="cal-message">Error al cargar la temperatura del agua</div>';
+        return;
+    }
+    if (req !== wsRequest) return;
+    const dates = Object.keys(data).filter(d => data[d].water.length).slice(0, FORECAST_DAYS);
+    if (!wsDays.childElementCount) buildWsDays(dates);
+    if (!dates.includes(wsDay)) wsDay = dates[0];
+    wsDays.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.day === wsDay));
+
+    const day = data[wsDay];
+    if (!day || !day.water.length || !day.air.length) {
+        wsContent.innerHTML = '<div class="cal-message">No hay datos de temperatura para este día</div>';
+        return;
+    }
+    const water = wsMean(day.water), air = wsMean(day.air), wind = day.wind.length ? wsMean(day.wind) : 0;
+    const feel = wsFeel(water, air, wind);
+    const ranked = WS_SUITS.map((suit, i) => ({ suit, i, score: wsScore(suit, feel) }))
+        // Best score first; on a tie, the suit whose range is centred closest to the felt temperature
+        .sort((a, b) => b.score - a.score || Math.abs((a.suit.min + Math.min(a.suit.max, 30)) / 2 - feel) - Math.abs((b.suit.min + Math.min(b.suit.max, 30)) / 2 - feel))
+        .slice(0, WS_SHOWN);
+    const best = ranked[0].suit;
+    const c = v => `${v.toFixed(1).replace('.', ',')} °C`;
+    const range = list => `${c(Math.min(...list))} – ${c(Math.max(...list))}`;
+
+    wsContent.innerHTML = `
+        <div class="ws-conds">
+            <div class="ws-cond"><span>${monoIcon('wave', 12)} Agua</span><strong>${c(water)}</strong><em>${range(day.water)}</em></div>
+            <div class="ws-cond"><span>Aire</span><strong>${c(air)}</strong><em>${range(day.air)}</em></div>
+            <div class="ws-cond"><span>${monoIcon('wind', 12)} Viento</span><strong>${Math.round(wind)} kn</strong><em>media del día</em></div>
+            <div class="ws-cond feel"><span>Sensación en el agua</span><strong>${c(feel)}</strong><em>con aire y viento</em></div>
+        </div>
+        <p class="ws-verdict">${best === WS_SUITS[0] ? '<strong>No hace falta neopreno.</strong>' : `Te recomendamos: <strong>${best.name}</strong>.`}</p>
+        <ol class="ws-list">
+            ${ranked.map((r, k) => `
+            <li class="ws-item${k === 0 ? ' best' : ''}">
+                <div>
+                    <div class="ws-name">${r.suit.name}${k === 0 ? '<span class="ws-tag">Recomendado</span>' : ''}</div>
+                    <div class="ws-note">${r.suit.note}</div>
+                </div>
+                ${wsStars(r.score)}
+            </li>`).join('')}
+        </ol>
+        <p class="ws-hint">Medias entre las ${pad(FIRST_HOUR)}:00 y las ${pad(LAST_HOUR)}:00. Es una orientación: si eres friolero o vas a estar mucho rato, sube un grosor; si hace sol y remas sin parar, puedes bajar uno.</p>`;
+}
+
+wsSpot.addEventListener('change', renderWetsuit);
+let wsLoaded = false;
+wsTool.addEventListener('toggle', () => {
+    if (!wsTool.open || wsLoaded) return;
+    wsLoaded = true;
+    renderWetsuit();
 });
 
 // ── Tool order: saved per user (Supabase metadata when logged in, this browser otherwise) ──
