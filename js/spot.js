@@ -76,21 +76,21 @@ function renderGuide(g, guides) {
     </div>`;
 }
 
-// The live webcam, or a "no cam" note (with the link to the cam hosted elsewhere, if the spot has one)
+// The webcam (latest snapshot + link to the live cam), or a "no cam" note (with the link to the cam hosted elsewhere,
+// if the spot has one)
 function renderMedia(spot) {
     const extLink = spot.extLink ? `
         <div class="ext-cam-link">
             <span style="color:#555;">Este spot tiene una cámara alojada en otra plataforma.</span>
             <a href="${spot.extLink}" target="_blank" rel="noopener">Ver Webcam Original</a>
         </div>` : '';
-    if (!spot.video) {
+    if (!spot.cam) {
         return `<div style="background:#f7f7f7;border-radius:12px;padding:3rem 1.5rem;text-align:center;margin-bottom:2rem;color:#888;">Sin cámara en directo para este spot</div>${extLink}`;
     }
     return `
         <div class="spot-cam">
-            <div class="spot-cam-inner">
-                <video id="spot-video" controls muted playsinline preload="none"></video>
-                <span class="cam-live-badge">EN DIRECTO</span>
+            <div class="spot-cam-inner" id="spot-cam">
+                <span class="cam-live-badge">${camInfo(spot).badge}</span>
             </div>
         </div>
         ${extLink}`;
@@ -112,7 +112,7 @@ async function loadSpot() {
         return;
     }
 
-    document.title = spot.name + ' - CostaCam';
+    document.title = spot.name + ' - CostaSurf Cams';
 
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&hourly=wind_speed_10m,wind_direction_10m&daily=wind_speed_10m_max,wind_direction_10m_dominant&wind_speed_unit=kn&timezone=auto&forecast_days=${FORECAST_DAYS}`;
 
@@ -275,8 +275,8 @@ async function loadSpot() {
             ${guideHtml}
         `;
 
-        // Start the cam before the favourites lookup so it doesn't wait on Supabase
-        if (spot.video) attachStream(document.getElementById('spot-video'), spot.video);
+        // Show the cam before the favourites lookup so it doesn't wait on Supabase
+        if (spot.cam) attachCam(document.getElementById('spot-cam'), spot);
 
         if (window.supabaseClient) {
             const { data: { session } } = await window.supabaseClient.auth.getSession();

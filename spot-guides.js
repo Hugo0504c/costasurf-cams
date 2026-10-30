@@ -330,7 +330,44 @@ window.SPOT_GUIDES = {
                 'Prueba el pescaíto en algún chiringuito después de la sesión.'
             ],
             escuelas: 'Pocas opciones comerciales fijas; mejor llevar material propio.',
-            cercanos: ['nerja', 'malagueta']
+            cercanos: ['torredelmar', 'nerja', 'malagueta']
+        },
+        torredelmar: {
+            tipo: 'Beach Break', fondo: 'Arena oscura y grava', nivel: 'Todos los niveles', afluencia: 'Media',
+            ola: 'Orillera, picos junto a los espigones', swell: 'Levante (E–SE)', viento: 'Terral (N) o sin viento', temporada: 'Otoño a primavera',
+            desc: [
+                'El spot de referencia de la Axarquía. Una playa larga y abierta frente al paseo marítimo de Torre del Mar, con picos de arena que cambian según el temporal y los espigones de piedra.',
+                'Está en la costa de Vélez-Málaga, unos 30 km al este de la capital. Como Benajarafe, recibe el Levante con más tamaño que la Bahía de Málaga, y la webcam permite ver desde casa si la orilla está rompiendo antes de ir.'
+            ],
+            condiciones: {
+                swell: 'Levante del E–SE, al que está muy expuesta.',
+                viento: 'Terral o calma. Con Levante soplando fuerte se pica rápido.',
+                marea: 'Poco relevante (Mediterráneo).',
+                tamano: 'De 0,5 a 1,5 m.',
+                momento: 'Cuando el Levante empieza a amainar y el mar de fondo sigue entrando, mejor a primera hora.'
+            },
+            peligros: [
+                'Espigones de piedra: no te acerques demasiado con mar grande.',
+                'Rompiente de orilla fuerte cuando hay tamaño.',
+                'Grava en la orilla: cuidado al entrar y salir.'
+            ],
+            acceso: [
+                'Por la A-7, salidas de Torre del Mar / Vélez-Málaga.',
+                'Aparcamiento en las calles cercanas al paseo; difícil en verano.',
+                'Autobús interurbano Málaga–Torre del Mar.'
+            ],
+            servicios: [
+                'Paseo marítimo con chiringuitos, bares y restaurantes.',
+                'Duchas y socorrismo en temporada de baño.',
+                'Tiendas y servicios del pueblo a un paso.'
+            ],
+            consejos: [
+                'Mira la webcam antes de salir: se ve toda la orilla y si está rompiendo.',
+                'Fuera del verano suele haber poca gente en el agua.',
+                'Lleva escarpines si te molesta la grava.'
+            ],
+            escuelas: 'Oferta reducida y sobre todo de SUP en verano; fuera de temporada, mejor material propio.',
+            cercanos: ['benajarafe', 'nerja']
         },
         nerja: {
             tipo: 'Beach Break', fondo: 'Arena y cantos', nivel: 'Iniciación / Intermedio', afluencia: 'Baja (Surf) / Alta (Turismo)',
@@ -367,7 +404,7 @@ window.SPOT_GUIDES = {
                 'Mejor con tablas con volumen: la ola tiene poca fuerza.'
             ],
             escuelas: 'Centros de alquiler de Kayak y SUP en Burriana; algunos ofrecen tablas de surf (corchopanes).',
-            cercanos: ['benajarafe']
+            cercanos: ['torredelmar', 'benajarafe']
         }
     }
 };

@@ -12,9 +12,28 @@ function switchTab(tabId) {
     document.getElementById('tab-' + tabId).classList.add('active');
 }
 
-// ── Live cams: each one only streams while it is on screen ─────
-document.querySelectorAll('#view-camaras video').forEach(video => {
-    attachStream(video, SPOTS[video.id.replace('video-', '')].video);
+// ── Webcams: latest snapshot + link to the live cam ────────────
+document.querySelectorAll('#view-camaras [data-cam]').forEach(box => attachCam(box, SPOTS[box.dataset.cam]));
+
+// Logged in: the cams of the user's favourite spots first, tagged "Favorito" (the rest keep their order).
+// Supabase loads with `defer`, so it is ready once the DOM is.
+onReady(async () => {
+    if (!window.supabaseClient) return;
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    if (!session) return;
+    const { data, error } = await window.supabaseClient.from('favorites').select('spot_id').eq('user_id', session.user.id);
+    if (error || !data || !data.length) return;
+    const favs = new Set(data.map(f => f.spot_id));
+    const view = document.getElementById('view-camaras');
+    const sections = [...view.querySelectorAll(':scope > .camera-section')];
+    const isFav = s => favs.has(s.id.replace('camera-', ''));
+    [...sections.filter(isFav), ...sections.filter(s => !isFav(s))].forEach(s => view.appendChild(s));
+    sections.filter(isFav).forEach(s => {
+        const tag = document.createElement('span');
+        tag.className = 'fav-tag';
+        tag.innerHTML = `${monoIcon('star', 12, true)} Favorito`;
+        s.querySelector('.video-title').appendChild(tag);
+    });
 });
 
 // ── Forecast ───────────────────────────────────────────────────
@@ -110,7 +129,7 @@ async function fetchForecast() {
 
 fetchForecast();
 
-// Runs right away (before the first paint) so opening /forecast never starts the cams.
+// Runs right away (before the first paint) so opening /forecast never loads the cam snapshots.
 function loadTabFromUrl() {
     const path = window.location.pathname;
     switchTab(path.includes('forecast') ? 'forecast' : 'camaras');
@@ -118,17 +137,8 @@ function loadTabFromUrl() {
 window.addEventListener('popstate', loadTabFromUrl);
 loadTabFromUrl();
 
-function acceptCookies() {
-    localStorage.setItem('cookiesAccepted', 'true');
-    document.getElementById('cookie-banner').style.display = 'none';
-}
-document.addEventListener("DOMContentLoaded", () => {
-    if (!localStorage.getItem('cookiesAccepted')) {
-        document.getElementById('cookie-banner').style.display = 'flex';
-    }
-});
 
-// Logo, tabs and cookie button (formerly inline onclick, which the Content-Security-Policy forbids)
+// Logo and tabs (formerly inline onclick, which the Content-Security-Policy forbids)
 document.getElementById('home-logo').addEventListener('click', () => switchTab('camaras', true));
 [['tab-camaras', '/webcams', 'camaras'], ['tab-forecast', '/forecast', 'forecast']].forEach(([id, url, tab]) => {
     document.getElementById(id).addEventListener('click', e => {
@@ -137,4 +147,4 @@ document.getElementById('home-logo').addEventListener('click', () => switchTab('
         switchTab(tab, true);
     });
 });
-document.getElementById('cookie-accept').addEventListener('click', acceptCookies);
+

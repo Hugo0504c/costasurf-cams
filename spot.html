@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml"><link rel="icon" href="/favicon.ico?v=2" sizes="32x32 48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
-    <title>CostaCam - Spot</title>
+    <link rel="icon" href="/favicon.svg?v=3" type="image/svg+xml"><link rel="icon" href="/favicon.ico?v=3" sizes="32x32 48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
+    <title>Spot - CostaSurf Cams</title>
     <style>
         :root {
             --color-black: #111;
@@ -61,12 +61,6 @@
             aspect-ratio: 16/9;
             margin-bottom: 3rem;
             position: relative;
-        }
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
         }
         .forecast-grid {
             display: grid;
@@ -207,10 +201,9 @@
             .guide-water-row { grid-template-columns: 1fr auto; }
             .guide-water-suit { grid-column: 1 / -1; }
         }
-        /* Live webcam */
+        /* Webcam: latest snapshot + link to the live cam (common.js) */
         .spot-cam { margin-bottom: 3rem; }
         .spot-cam-inner { position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 16 / 9; }
-        .spot-cam-inner video { width: 100%; height: 100%; object-fit: cover; display: block; }
         .cam-live-badge { position: absolute; top: 12px; left: 12px; z-index: 12; display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.6); color: #fff; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; padding: 5px 10px; border-radius: 20px; pointer-events: none; }
         .cam-live-badge::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--color-red); }
         .ext-cam-link { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; background: var(--color-gray-light); border-radius: 12px; padding: 1rem 1.25rem; margin: -1.5rem 0 3rem 0; }
@@ -257,35 +250,18 @@
             #profile-btn-nav { padding: 6px 12px; font-size: 0.85rem; }
         }
 
+        /* iPhone zooms into any text field under 16px when it is tapped: 16px on phones/tablets avoids it
+           (without blocking pinch-zoom, which people with low vision need) */
+        @media (max-width: 1024px), (pointer: coarse) { input, select, textarea { font-size: 16px !important; } }
     </style>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://marine-api.open-meteo.com" crossorigin>
     <link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
     <link rel="preconnect" href="https://dcndjvilqdzezlcbsnrh.supabase.co" crossorigin>
-    <script src="/common.js?v=22"></script>
+    <script src="/common.js?v=26"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js" integrity="sha384-dl/4LkSyQ4uEucc48NM6VDZLAjLLq9yMzZ5JLXumBq7Ld33XBof73hseOqPhO89+" crossorigin="anonymous" defer></script>
-    <script src="/spot-guides.js?v=4" defer></script>
+    <script src="/spot-guides.js?v=5" defer></script>
     <script src="/supabase-config.js?v=7" defer></script>
-
-    <style>
-        /* Ensure videos preserve aspect ratio and don't crop in fullscreen */
-        video:-webkit-full-screen { object-fit: contain !important; }
-        video:-moz-full-screen { object-fit: contain !important; }
-        video:-ms-fullscreen { object-fit: contain !important; }
-        video:fullscreen { object-fit: contain !important; }
-
-        .cam-loader {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
-            z-index: 10;
-        }
-        .spinner {
-            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3);
-            border-top: 4px solid #fff; border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
 </head>
 <body>
 
@@ -315,7 +291,7 @@
     <footer>
         <h3>COSTASURF CAMS</h3>
         <p class="tagline">Tu ventana en directo a las mejores olas de Málaga.</p>
-        <a class="tagline" style="display:block; margin-bottom: 0;">Webcams powered by Meteo360</a>
+        <a class="tagline" style="display:block; margin-bottom: 0;">Webcams: meteo365 y Windy.com</a>
         <a class="powered-by" href="https://open-meteo.com" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
             Forecast powered by Open-Meteo Marine API
@@ -330,13 +306,13 @@
     </footer>
 
 
-    <script src="/js/spot.js?v=1"></script>
+    <script src="/js/spot.js?v=4"></script>
 
     <!-- Auth Popup -->
     <div id="auth-popup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
         <div style="background:#fff; padding:2rem; border-radius:12px; width:90%; max-width:400px; text-align:center; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
             <button type="button" class="auth-popup-close" aria-label="Cerrar" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#888;">&times;</button>
-            <h3 style="margin-top:0; font-size:1.5rem; font-weight:800;">¡Únete a CostaCam!</h3>
+            <h3 style="margin-top:0; font-size:1.5rem; font-weight:800;">¡Únete a CostaSurf Cams!</h3>
             <p style="color:#666; margin-bottom:1.5rem;">Inicia sesión para guardar tus spots, <strong>recibir alertas de olas por correo</strong> y acceder a todas las previsiones.</p>
             <a href="/login" style="display:block; background:#111; color:#fff; text-decoration:none; padding:12px; border-radius:6px; font-weight:bold; margin-bottom:10px;">Iniciar Sesión</a>
             <a href="/login?signup=true" style="display:block; background:#f7f7f7; color:#111; text-decoration:none; padding:12px; border-radius:6px; font-weight:bold; border:1px solid #eaeaea;">Crear Cuenta</a>

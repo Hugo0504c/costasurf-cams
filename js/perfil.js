@@ -195,12 +195,8 @@
             container.innerHTML = known.map((f, i) => {
                 const info = SPOTS[f.spot_id];
                 let mediaHtml = '';
-                if (info.video) {
-                    mediaHtml = `
-                        <div class="video-wrapper">
-                            <video id="video-${i}" controls muted playsinline preload="none"></video>
-                        </div>
-                    `;
+                if (info.cam) {
+                    mediaHtml = `<div class="video-wrapper" id="cam-${i}"></div>`;
                 } else if (info.extLink) {
                     mediaHtml = `
                         <div class="video-wrapper" style="background:#f7f7f7;">
@@ -243,12 +239,12 @@
 
             container.querySelectorAll('.remove-btn').forEach(btn => btn.addEventListener('click', () => removeFav(btn.dataset.spot)));
 
-            // Initialize players (each streams only while on screen) and forecasts
+            // Fill in the cams (latest snapshot + link to the live cam) and the forecasts
             const forecastItems = [];
             known.forEach((f, i) => {
                 const info = SPOTS[f.spot_id];
                 const containerId = `forecast-container-${i}`;
-                if (info.video) attachStream(document.getElementById(`video-${i}`), info.video);
+                if (info.cam) attachCam(document.getElementById(`cam-${i}`), info);
                 if (info.lat && info.lon) {
                     forecastItems.push({ lat: info.lat, lon: info.lon, facing: info.facing, containerId });
                 } else {
@@ -272,7 +268,16 @@
                 return;
             }
 
-            currentUser = session.user;
+            // Name, photo and alerts can also change from the Telegram bot (/cuenta, /alertas), which the browser's saved
+            // session doesn't know about: read the account fresh from the server. If it no longer exists (deleted from
+            // the bot), the saved session is useless: drop it and go to login.
+            const { data: fresh, error: userError } = await window.supabaseClient.auth.getUser().catch(err => ({ data: null, error: err }));
+            if (userError && userError.status && userError.status < 500) {
+                await window.supabaseClient.auth.signOut({ scope: 'local' }).catch(() => {});
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = (fresh && fresh.user) || session.user;
             updateProfileUI(currentUser);
             alertsSwitch.checked = (currentUser.user_metadata || {}).alerts_enabled === true;
 

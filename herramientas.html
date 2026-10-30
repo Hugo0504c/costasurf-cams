@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml"><link rel="icon" href="/favicon.ico?v=2" sizes="32x32 48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
-    <title>Herramientas - CostaCam</title>
+    <link rel="icon" href="/favicon.svg?v=3" type="image/svg+xml"><link rel="icon" href="/favicon.ico?v=3" sizes="32x32 48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
+    <title>Herramientas - CostaSurf Cams</title>
     <style>
         :root { --color-black: #111; --color-gray-light: #f7f7f7; --color-border: #eaeaea; }
         /* Column layout so the footer always sits at the bottom, even on short pages */
@@ -57,6 +57,9 @@
         .cal-nav { display: flex; gap: 6px; }
         .cal-nav button { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--color-border); background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #111; }
         .cal-nav button:hover { background: var(--color-gray-light); }
+        .cal-metric { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+        .cal-metric button { border: 1px solid #ddd; background: #fff; color: #333; padding: 7px 14px; border-radius: 20px; font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+        .cal-metric button.active { background: #111; border-color: #111; color: #fff; }
         .cal-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 1rem; font-size: 0.85rem; }
         .cal-legend span { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #444; }
         .cal-legend i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
@@ -172,6 +175,37 @@
         /* Spot filter (reuses the alert controls and the map's wave-size colours) */
         .flt-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px; background: var(--color-gray-light); border-radius: 12px; padding: 16px; margin-bottom: 1rem; }
         .flt-filters .full { grid-column: 1 / -1; }
+        /* Telegram alerts box */
+        .tg-box { background: var(--color-gray-light); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+        .tg-head { display: flex; align-items: center; gap: 8px; color: #111; }
+        .tg-status { margin-left: auto; font-size: 0.75rem; font-weight: 700; color: #777; background: #fff; border: 1px solid #ddd; border-radius: 20px; padding: 2px 10px; }
+        .tg-status.on { color: #fff; background: #111; border-color: #111; }
+        .tg-text { margin: 0; font-size: 0.85rem; color: #444; line-height: 1.5; }
+        .tg-steps { margin: 0; padding-left: 1.2rem; font-size: 0.85rem; color: #444; line-height: 1.6; }
+        .tg-actions { display: flex; align-items: center; gap: 14px; }
+        .tg-btn { background: #111; color: #fff; border: none; border-radius: 8px; padding: 9px 16px; font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+        .tg-btn:disabled { opacity: 0.5; cursor: default; }
+        .tg-msg { font-size: 0.85rem; color: #444; }
+        .tg-msg:empty { display: none; }
+        .tg-msg a { color: #111; font-weight: 700; }
+        .tg-tool { display: flex; flex-direction: column; gap: 12px; }
+        .tg-tool .tg-text a, .tg-steps a, #tg-alert-hint a { color: #111; font-weight: 700; }
+        .tg-features { margin: 0; padding-left: 1.2rem; font-size: 0.9rem; color: #444; line-height: 1.6; }
+        .tg-open { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; background: #111; color: #fff; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
+        .tg-open:hover { background: #333; }
+        .flt-filters .adv-scale { display: none; } /* the value next to each label is enough */
+        .flt-group { font-size: 0.95rem; font-weight: 800; color: #111; padding-top: 4px; border-top: 1px solid #e3e3e3; margin-bottom: -8px; }
+        .flt-group:first-child { border-top: none; padding-top: 0; }
+        .flt-presets button.active { background: #111; border-color: #111; color: #fff; }
+        .flt-more { margin-bottom: 0.75rem; }
+        .flt-more > summary { list-style: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: 1px solid #ddd; background: #fff; color: #111; padding: 7px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.75rem; }
+        .flt-more > summary::-webkit-details-marker { display: none; }
+        .flt-more[open] > summary { background: var(--color-gray-light); }
+        .flt-badge { background: #111; color: #fff; border-radius: 10px; min-width: 20px; padding: 0 6px; font-size: 0.75rem; line-height: 20px; text-align: center; }
+        .flt-active { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0.75rem; }
+        .flt-active:empty { display: none; }
+        .flt-active button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #ddd; background: var(--color-gray-light); color: #333; padding: 4px 10px; border-radius: 20px; font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .flt-active button:hover { border-color: #999; }
         .adv-chip input:disabled + span { opacity: 0.45; cursor: not-allowed; }
         .flt-hint { font-size: 0.8rem; color: #777; margin-top: 8px; }
         .flt-hint a { color: #111; font-weight: 700; }
@@ -269,11 +303,14 @@
         footer .tagline { color: #999; font-size: 0.9rem; margin: 0 0 1.5rem 0; display: block; text-decoration: none; }
         footer .powered-by { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #aaa; text-decoration: none; padding: 8px 16px; background: #222; border-radius: 20px; margin-top: 1rem; transition: background 0.2s; }
         footer .powered-by:hover { background: #333; color: #fff; }
+        /* iPhone zooms into any text field under 16px when it is tapped: 16px on phones/tablets avoids it
+           (without blocking pinch-zoom, which people with low vision need) */
+        @media (max-width: 1024px), (pointer: coarse) { input, select, textarea { font-size: 16px !important; } }
     </style>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://marine-api.open-meteo.com" crossorigin>
     <link rel="preconnect" href="https://dcndjvilqdzezlcbsnrh.supabase.co" crossorigin>
-    <script src="/common.js?v=22"></script>
+    <script src="/common.js?v=26"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js" integrity="sha384-dl/4LkSyQ4uEucc48NM6VDZLAjLLq9yMzZ5JLXumBq7Ld33XBof73hseOqPhO89+" crossorigin="anonymous" defer></script>
     <script src="/supabase-config.js?v=7" defer></script>
 </head>
@@ -308,6 +345,58 @@
         </div>
 
         <div id="tools">
+        <details class="tool" id="tool-telegram">
+            <summary>
+                <div class="tool-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </div>
+                <div>
+                    <div class="tool-title">Bot de Telegram</div>
+                    <div class="tool-desc">La previsión, tus favoritos y tus alertas desde Telegram, con botones.</div>
+                </div>
+                <svg class="tool-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </summary>
+            <div class="tool-body tg-tool">
+                <p class="tg-text">El bot de CostaSurf Cams (<strong>@costasurfcams_bot</strong>) tiene un panel con botones: escribe <strong>/panel</strong> y elige qué quieres ver.</p>
+                <ul class="tg-features">
+                    <li><strong>Dónde surfear hoy:</strong> todos los spots ordenados de mejor a peor, con la mejor franja horaria.</li>
+                    <li><strong>Previsión de un spot:</strong> tamaño, periodo, energía y viento de los próximos 3 días.</li>
+                    <li><strong>Tus favoritos:</strong> cómo estarán hoy y mañana, y añadir o quitar spots.</li>
+                    <li><strong>Alertas:</strong> el aviso de las 07:30 cuando hay olas, como mensaje de Telegram, y cambiar tus ajustes.</li>
+                    <li><strong>Tu cuenta:</strong> nombre, foto de perfil y desconectar el bot.</li>
+                </ul>
+                <p class="tg-text">Para usar el bot necesitas una cuenta de CostaSurf Cams (es gratis) conectada aquí abajo. Lo que cambies en el bot se verá también en la web.</p>
+                <a class="tg-open" href="https://t.me/costasurfcams_bot" target="_blank" rel="noopener">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    Abrir el bot en Telegram
+                </a>
+
+                <div class="tg-box">
+                    <div class="tg-head">
+                        <strong>Conectar tu cuenta</strong>
+                        <span class="tg-status" id="tg-status">No conectado</span>
+                    </div>
+                    <p class="tg-text" id="tg-login" hidden><a href="/login?next=%2Fherramientas%23telegram">Inicia sesión</a> para conectar tu cuenta al bot.</p>
+                    <div id="tg-account">
+                        <div id="tg-howto">
+                            <ol class="tg-steps">
+                                <li>Ten Telegram instalado en el móvil o el ordenador.</li>
+                                <li>Pulsa <strong>Conectar Telegram</strong>: se abrirá el chat del bot.</li>
+                                <li>En Telegram, pulsa <strong>Iniciar</strong> (o <em>Start</em>). El bot te confirmará la conexión y aquí verás «Conectado».</li>
+                                <li>Si quieres las alertas por Telegram, márcalo en <a href="#alertas">Alertas de Olas</a> → «Dónde recibirlas».</li>
+                            </ol>
+                        </div>
+                        <p class="tg-text" id="tg-stop" hidden>Tu cuenta está conectada. Para recibir las alertas por Telegram, márcalo en <a href="#alertas">Alertas de Olas</a>. Si desconectas, el bot deja de tener acceso a tu cuenta (la previsión seguirá funcionando).</p>
+                        <div class="tg-actions">
+                            <button type="button" class="tg-btn" id="tg-connect">Conectar Telegram</button>
+                            <button type="button" class="flt-reset" id="tg-unlink" hidden>Desconectar</button>
+                        </div>
+                        <div class="tg-msg" id="tg-msg"></div>
+                    </div>
+                </div>
+            </div>
+        </details>
+
         <details class="tool" id="tool-calendar">
             <summary>
                 <div class="tool-icon">
@@ -315,107 +404,12 @@
                 </div>
                 <div>
                     <div class="tool-title">Calendario de olas</div>
-                    <div class="tool-desc">Tamaño de ola previsto para los próximos 9 días en tus spots favoritos o los que elijas.</div>
+                    <div class="tool-desc">Tamaño o energía de ola previstos para los próximos 9 días en tus spots favoritos o los que elijas.</div>
                 </div>
                 <svg class="tool-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </summary>
             <div class="tool-body" id="calendar-body">
                 <div class="cal-message">Cargando...</div>
-            </div>
-        </details>
-
-        <details class="tool" id="tool-filter">
-            <summary>
-                <div class="tool-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                </div>
-                <div>
-                    <div class="tool-title">Filtrar spots</div>
-                    <div class="tool-desc">Elige uno o varios días y encuentra los spots con las condiciones que buscas.</div>
-                </div>
-                <svg class="tool-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </summary>
-            <div class="tool-body map-root">
-                <span class="alert-label">Días (puedes elegir varios)</span>
-                <div class="map-days" id="flt-days" role="group" aria-label="Días"></div>
-
-                <div class="flt-filters" id="flt-filters">
-                    <div class="full">
-                        <span class="alert-label">Franjas horarias (puedes elegir varias)</span>
-                        <div class="adv-chips" id="flt-band">
-                            <label class="adv-chip"><input type="checkbox" value="any" checked><span>Cualquier hora</span></label>
-                            <label class="adv-chip"><input type="checkbox" value="early"><span>Primera hora (07–10 h)</span></label>
-                            <label class="adv-chip"><input type="checkbox" value="midmorning"><span>Media mañana (10–13 h)</span></label>
-                            <label class="adv-chip"><input type="checkbox" value="afternoon"><span>Tarde (13–17 h)</span></label>
-                            <label class="adv-chip"><input type="checkbox" value="evening"><span>Última hora (17–20 h)</span></label>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="adv-head">
-                            <label class="alert-label" for="flt-min-size" style="margin:0;">Tamaño mínimo de ola</label>
-                            <span class="adv-val" id="flt-min-size-val"></span>
-                        </div>
-                        <input type="range" id="flt-min-size" class="adv-range" min="0" max="3" step="0.1" value="0">
-                        <div class="adv-scale"><span>Cualquiera</span><span>3.0m</span></div>
-                    </div>
-                    <div>
-                        <div class="adv-head">
-                            <label class="alert-label" for="flt-max-size" style="margin:0;">Tamaño máximo de ola</label>
-                            <span class="adv-val" id="flt-max-size-val"></span>
-                        </div>
-                        <input type="range" id="flt-max-size" class="adv-range" min="0.5" max="4" step="0.1" value="4">
-                        <div class="adv-scale"><span>0.5m</span><span>Sin límite</span></div>
-                    </div>
-                    <div>
-                        <div class="adv-head">
-                            <label class="alert-label" for="flt-min-period" style="margin:0;">Periodo mínimo</label>
-                            <span class="adv-val" id="flt-min-period-val"></span>
-                        </div>
-                        <input type="range" id="flt-min-period" class="adv-range" min="0" max="14" step="1" value="0">
-                        <div class="adv-scale"><span>Cualquiera</span><span>14 s</span></div>
-                    </div>
-                    <div>
-                        <div class="adv-head">
-                            <label class="alert-label" for="flt-max-wind" style="margin:0;">Viento máximo</label>
-                            <span class="adv-val" id="flt-max-wind-val"></span>
-                        </div>
-                        <input type="range" id="flt-max-wind" class="adv-range" min="5" max="50" step="5" value="50">
-                        <div class="adv-scale"><span>5 km/h</span><span>Sin límite</span></div>
-                    </div>
-                    <div class="full">
-                        <span class="alert-label">Tipo de viento</span>
-                        <div class="adv-chips" id="flt-wind-types">
-                            <label class="adv-chip"><input type="checkbox" value="Glassy" checked><span>Sin viento (glassy)</span></label>
-                            <label class="adv-chip"><input type="checkbox" value="Off-shore" checked><span>Terral (off-shore)</span></label>
-                            <label class="adv-chip"><input type="checkbox" value="Cross-shore" checked><span>Cruzado</span></label>
-                            <label class="adv-chip"><input type="checkbox" value="On-shore" checked><span>De mar (on-shore)</span></label>
-                        </div>
-                    </div>
-                    <div class="full">
-                        <span class="alert-label">Spots</span>
-                        <div class="adv-chips">
-                            <label class="adv-chip" id="flt-favs-chip"><input type="checkbox" id="flt-favs"><span><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.1em"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> <span>Solo favoritos</span></span></label>
-                            <label class="adv-chip"><input type="checkbox" id="flt-cams"><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> <span>Solo con webcam</span></span></label>
-                        </div>
-                        <div class="flt-hint" id="flt-favs-hint" style="display:none;"></div>
-                    </div>
-                </div>
-
-                <div class="flt-bar">
-                    <span class="flt-count" id="flt-count"></span>
-                    <div class="flt-bar-right">
-                        <button type="button" class="flt-reset" id="flt-reset">Quitar filtros</button>
-                        <select id="flt-sort" class="modern-select" aria-label="Ordenar">
-                            <option value="score">Mejores condiciones</option>
-                            <option value="wave">Más olas</option>
-                            <option value="wind">Menos viento</option>
-                            <option value="name">Nombre</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="flt-results">
-                    <div class="cal-message">Cargando...</div>
-                </div>
             </div>
         </details>
 
@@ -481,7 +475,7 @@
                 </div>
                 <div>
                     <div class="tool-title">Alertas de Olas</div>
-                    <div class="tool-desc">Recibe un correo cuando haya buenas previsiones en tus spots favoritos.</div>
+                    <div class="tool-desc">Recibe un aviso por correo o Telegram cuando haya buenas previsiones en tus spots favoritos.</div>
                 </div>
                 <svg class="tool-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </summary>
@@ -497,8 +491,8 @@
                     <div class="alert-box">
                         <div class="alert-row">
                             <div style="display:flex; flex-direction:column;">
-                                <span style="font-weight:700; font-size:1rem; color:#111;">Notificaciones por email</span>
-                                <span style="font-size:0.8rem; color:#888; margin-top:2px;">Avisos diarios a las 07:30 (hora de España)</span>
+                                <span style="font-weight:700; font-size:1rem; color:#111;">Alertas de olas</span>
+                                <span style="font-size:0.8rem; color:#888; margin-top:2px;">Un aviso cada mañana a las 07:30 (hora de España), solo si hay olas</span>
                             </div>
                             <label class="toggle-switch">
                                 <input type="checkbox" id="alert-enabled">
@@ -507,6 +501,16 @@
                         </div>
 
                         <div id="alert-settings" style="display:none; flex-direction:column; gap:15px; padding-top:15px; border-top:1px solid #eaeaea;">
+                            <div>
+                                <span class="alert-label">Dónde recibirlas</span>
+                                <div class="adv-chips">
+                                    <label class="adv-chip"><input type="checkbox" id="alert-ch-email" checked><span>Correo</span></label>
+                                    <label class="adv-chip"><input type="checkbox" id="alert-ch-telegram"><span>Telegram</span></label>
+                                </div>
+                                <div class="adv-error" id="alert-channel-error">Elige al menos un sitio donde recibir las alertas.</div>
+                                <p class="flt-hint" id="tg-alert-hint">Para recibirlas por Telegram, conecta antes tu cuenta en la herramienta <a href="#telegram">Bot de Telegram</a>.</p>
+                            </div>
+
                             <div>
                                 <label class="alert-label" for="alert-days">Antelación del aviso</label>
                                 <select id="alert-days" class="modern-select">
@@ -531,7 +535,7 @@
                             <div class="alert-row adv-toggle-row">
                                 <div style="display:flex; flex-direction:column;">
                                     <span style="font-weight:700; font-size:0.95rem; color:#111;"><span>Alertas avanzadas</span></span>
-                                    <span style="font-size:0.8rem; color:#888; margin-top:2px;">Filtra también por periodo, viento y horario.</span>
+                                    <span style="font-size:0.8rem; color:#888; margin-top:2px;">Filtra también por periodo, energía, viento y horario.</span>
                                 </div>
                                 <label class="toggle-switch">
                                     <input type="checkbox" id="alert-advanced">
@@ -555,6 +559,15 @@
                                     </div>
                                     <input type="range" id="alert-max-size" class="adv-range" min="0.5" max="4" step="0.1" value="4">
                                     <div class="adv-scale"><span>0.5m</span><span>Sin límite</span></div>
+                                </div>
+                                <div>
+                                    <div class="adv-head">
+                                        <label class="alert-label" for="alert-min-energy" style="margin:0;">Energía mínima</label>
+                                        <span class="adv-val" id="alert-min-energy-val"></span>
+                                    </div>
+                                    <!-- Steps through ENERGY_STEPS (herramientas.js): the value is a step index -->
+                                    <input type="range" id="alert-min-energy" class="adv-range" min="0" max="13" step="1" value="0">
+                                    <div class="adv-scale"><span>Cualquiera</span><span>300 kJ</span></div>
                                 </div>
                                 <div>
                                     <div class="adv-head">
@@ -591,13 +604,145 @@
                 </div>
             </div>
         </details>
+
+        <details class="tool" id="tool-filter">
+            <summary>
+                <div class="tool-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                </div>
+                <div>
+                    <div class="tool-title">Filtrar spots</div>
+                    <div class="tool-desc">Elige uno o varios días y encuentra los spots con las condiciones que buscas.</div>
+                </div>
+                <svg class="tool-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </summary>
+            <div class="tool-body map-root">
+                <span class="alert-label">Días</span>
+                <div class="map-days" id="flt-days" role="group" aria-label="Días"></div>
+
+                <span class="alert-label">Qué buscas</span>
+                <div class="map-days flt-presets" id="flt-presets" role="group" aria-label="Qué buscas">
+                    <button type="button" data-preset="any">Cualquier ola</button>
+                    <button type="button" data-preset="beginner">Para aprender</button>
+                    <button type="button" data-preset="surf">Surfeable</button>
+                    <button type="button" data-preset="good">Día bueno</button>
+                </div>
+
+                <details class="flt-more" id="flt-more">
+                <summary>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                    Ajustar filtros <span class="flt-badge" id="flt-badge" hidden></span>
+                </summary>
+                <div class="flt-filters" id="flt-filters">
+                    <div class="full flt-group">Olas</div>
+                    <div>
+                        <div class="adv-head">
+                            <label class="alert-label" for="flt-min-size" style="margin:0;">Tamaño mínimo de ola</label>
+                            <span class="adv-val" id="flt-min-size-val"></span>
+                        </div>
+                        <input type="range" id="flt-min-size" class="adv-range" min="0" max="3" step="0.1" value="0">
+                        <div class="adv-scale"><span>Cualquiera</span><span>3.0m</span></div>
+                    </div>
+                    <div>
+                        <div class="adv-head">
+                            <label class="alert-label" for="flt-max-size" style="margin:0;">Tamaño máximo de ola</label>
+                            <span class="adv-val" id="flt-max-size-val"></span>
+                        </div>
+                        <input type="range" id="flt-max-size" class="adv-range" min="0.5" max="4" step="0.1" value="4">
+                        <div class="adv-scale"><span>0.5m</span><span>Sin límite</span></div>
+                    </div>
+                    <!-- Energy sliders move through ENERGY_STEPS (herramientas.js): the value is a step index -->
+                    <div>
+                        <div class="adv-head">
+                            <label class="alert-label" for="flt-min-energy" style="margin:0;">Energía mínima</label>
+                            <span class="adv-val" id="flt-min-energy-val"></span>
+                        </div>
+                        <input type="range" id="flt-min-energy" class="adv-range" min="0" max="13" step="1" value="0">
+                        <div class="adv-scale"><span>Cualquiera</span><span>300 kJ</span></div>
+                    </div>
+                    <div>
+                        <div class="adv-head">
+                            <label class="alert-label" for="flt-max-energy" style="margin:0;">Energía máxima</label>
+                            <span class="adv-val" id="flt-max-energy-val"></span>
+                        </div>
+                        <input type="range" id="flt-max-energy" class="adv-range" min="1" max="14" step="1" value="14">
+                        <div class="adv-scale"><span>5 kJ</span><span>Sin límite</span></div>
+                    </div>
+                    <div>
+                        <div class="adv-head">
+                            <label class="alert-label" for="flt-min-period" style="margin:0;">Periodo mínimo</label>
+                            <span class="adv-val" id="flt-min-period-val"></span>
+                        </div>
+                        <input type="range" id="flt-min-period" class="adv-range" min="0" max="14" step="1" value="0">
+                        <div class="adv-scale"><span>Cualquiera</span><span>14 s</span></div>
+                    </div>
+                    <div class="full flt-group">Viento</div>
+                    <div>
+                        <div class="adv-head">
+                            <label class="alert-label" for="flt-max-wind" style="margin:0;">Viento máximo</label>
+                            <span class="adv-val" id="flt-max-wind-val"></span>
+                        </div>
+                        <input type="range" id="flt-max-wind" class="adv-range" min="5" max="50" step="5" value="50">
+                        <div class="adv-scale"><span>5 km/h</span><span>Sin límite</span></div>
+                    </div>
+                    <div class="full">
+                        <span class="alert-label">Tipo de viento</span>
+                        <div class="adv-chips" id="flt-wind-types">
+                            <label class="adv-chip"><input type="checkbox" value="Glassy" checked><span>Sin viento (glassy)</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="Off-shore" checked><span>Terral (off-shore)</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="Cross-shore" checked><span>Cruzado</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="On-shore" checked><span>De mar (on-shore)</span></label>
+                        </div>
+                    </div>
+                    <div class="full flt-group">Horario y spots</div>
+                    <div class="full">
+                        <span class="alert-label">Franjas horarias</span>
+                        <div class="adv-chips" id="flt-band">
+                            <label class="adv-chip"><input type="checkbox" value="any" checked><span>Cualquier hora</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="early"><span>Primera hora (07–10 h)</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="midmorning"><span>Media mañana (10–13 h)</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="afternoon"><span>Tarde (13–17 h)</span></label>
+                            <label class="adv-chip"><input type="checkbox" value="evening"><span>Última hora (17–20 h)</span></label>
+                        </div>
+                    </div>
+                    <div class="full">
+                        <span class="alert-label">Spots</span>
+                        <div class="adv-chips">
+                            <label class="adv-chip" id="flt-favs-chip"><input type="checkbox" id="flt-favs"><span><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.1em"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> <span>Solo favoritos</span></span></label>
+                            <label class="adv-chip"><input type="checkbox" id="flt-cams"><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> <span>Solo con webcam</span></span></label>
+                        </div>
+                        <div class="flt-hint" id="flt-favs-hint" style="display:none;"></div>
+                    </div>
+                </div>
+                </details>
+
+                <div class="flt-active" id="flt-active"></div>
+
+                <div class="flt-bar">
+                    <span class="flt-count" id="flt-count"></span>
+                    <div class="flt-bar-right">
+                        <button type="button" class="flt-reset" id="flt-reset">Quitar filtros</button>
+                        <select id="flt-sort" class="modern-select" aria-label="Ordenar">
+                            <option value="score">Mejores condiciones</option>
+                            <option value="wave">Más olas</option>
+                            <option value="energy">Más energía</option>
+                            <option value="wind">Menos viento</option>
+                            <option value="name">Nombre</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="flt-results">
+                    <div class="cal-message">Cargando...</div>
+                </div>
+            </div>
+        </details>
         </div>
     </div>
 
     <footer>
         <h3>COSTASURF CAMS</h3>
         <p class="tagline">Tu ventana en directo a las mejores olas de Málaga.</p>
-        <a class="tagline" style="display:block; margin-bottom: 0;">Webcams powered by Meteo360</a>
+        <a class="tagline" style="display:block; margin-bottom: 0;">Webcams: meteo365 y Windy.com</a>
         <a class="powered-by" href="https://open-meteo.com" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
             Forecast powered by Open-Meteo Marine API
@@ -610,6 +755,6 @@
         </div>
     </footer>
 
-    <script src="/js/herramientas.js?v=1"></script>
+    <script src="/js/herramientas.js?v=9"></script>
 </body>
 </html>

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml"><link rel="icon" href="/favicon.ico?v=2" sizes="32x32 48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
-    <title>Iniciar Sesión - CostaCam</title>
+    <link rel="icon" href="/favicon.svg?v=3" type="image/svg+xml"><link rel="icon" href="/favicon.ico?v=3" sizes="32x32 48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
+    <title>Iniciar Sesión - CostaSurf Cams</title>
     <style>
         :root { --color-black: #111; --color-border: #eaeaea; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #fafafa; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
@@ -62,10 +62,35 @@
         @media (max-width: 480px) {
             .auth-container { padding: 1.5rem; margin: 2rem auto; width: 90%; }
         }
+
+        /* Password reset */
+        .link-btn { display: block; margin: 0.9rem auto 0; background: none; border: none; color: #555; font: inherit; font-size: 0.85rem; font-weight: 600; text-decoration: underline; cursor: pointer; padding: 0; }
+        .link-btn:hover { color: #111; }
+        #msg .link-btn { margin-top: 0.5rem; color: #111; }
+        .reset-intro { color: #555; font-size: 0.9rem; margin: 0 0 1rem 0; }
+        #reset-form .btn { width: 100%; }
+
+        /* Signup consent + first layer of data protection information (LOPDGDD art. 11) */
+        .legal-check { display: flex; gap: 10px; align-items: flex-start; text-align: left; font-size: 0.82rem; color: #555; line-height: 1.45; margin: 0 0 1rem 0; cursor: pointer; }
+        .legal-check input { margin-top: 3px; width: 16px; height: 16px; flex-shrink: 0; accent-color: #111; }
+        .legal-check a { color: #111; font-weight: 700; }
+        .legal-check em { color: #888; font-style: normal; }
+        .legal-info { margin-top: 1.25rem; text-align: left; font-size: 0.8rem; color: #555; }
+        .legal-info summary { cursor: pointer; font-weight: 700; color: #333; }
+        .legal-info dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0.75rem 0 0 0; }
+        .legal-info dt { font-weight: 700; color: #333; }
+        .legal-info dd { margin: 0; }
+        .legal-info a { color: #111; }
+        .legal-footer { text-align: center; padding: 2rem 1rem; }
+        .legal-footer a { color: #888; text-decoration: none; margin: 0 8px; font-size: 0.85rem; }
+        @media (max-width: 480px) { .legal-info dl { grid-template-columns: 1fr; } }
+        /* iPhone zooms into any text field under 16px when it is tapped: 16px on phones/tablets avoids it
+           (without blocking pinch-zoom, which people with low vision need) */
+        @media (max-width: 1024px), (pointer: coarse) { input, select, textarea { font-size: 16px !important; } }
     </style>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://dcndjvilqdzezlcbsnrh.supabase.co" crossorigin>
-    <script src="/common.js?v=22"></script>
+    <script src="/common.js?v=26"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js" integrity="sha384-dl/4LkSyQ4uEucc48NM6VDZLAjLLq9yMzZ5JLXumBq7Ld33XBof73hseOqPhO89+" crossorigin="anonymous" defer></script>
     <script src="/supabase-config.js?v=7" defer></script>
 </head>
@@ -88,20 +113,52 @@
     </header>
 
     <div class="auth-container">
-        <h2>Bienvenido a CostaCam</h2>
+        <h2>Bienvenido a CostaSurf Cams</h2>
 
         <form id="login-form">
             <input type="email" id="email" placeholder="Correo electrónico" required>
             <input type="password" id="password" placeholder="Contraseña" required>
             <div id="captcha" style="display:flex; justify-content:center; margin-bottom:1rem;"></div>
+            <label class="legal-check">
+                <input type="checkbox" id="accept-legal">
+                <span>Tengo al menos 14 años y he leído y acepto el <a href="/legal.html#aviso" target="_blank">Aviso legal</a> y la <a href="/legal.html#privacidad" target="_blank">Política de privacidad</a>. <em>(Solo para crear cuenta.)</em></span>
+            </label>
             <div class="form-actions">
                 <button type="button" class="btn btn-primary" id="btn-login" style="margin-bottom:0;">Iniciar Sesión</button>
                 <button type="button" class="btn btn-secondary" id="btn-register" style="margin-bottom:0;">Crear Cuenta</button>
             </div>
+            <button type="button" class="link-btn" id="btn-forgot">¿Has olvidado tu contraseña?</button>
+        </form>
+
+        <!-- Shown when arriving from the password reset email (?reset=1) -->
+        <form id="reset-form" hidden>
+            <p class="reset-intro">Escribe tu nueva contraseña (mínimo 8 caracteres).</p>
+            <input type="password" id="new-password" placeholder="Nueva contraseña" autocomplete="new-password">
+            <input type="password" id="new-password-2" placeholder="Repite la nueva contraseña" autocomplete="new-password">
+            <button type="button" class="btn btn-primary" id="btn-save-password">Guardar nueva contraseña</button>
         </form>
         <div id="msg"></div>
+
+        <details class="legal-info">
+            <summary>Información básica sobre protección de datos</summary>
+            <dl>
+                <dt>Responsable</dt><dd>El titular de CostaSurf Cams (ver <a href="/legal.html#aviso">Aviso legal</a>).</dd>
+                <dt>Finalidad</dt><dd>Gestionar tu cuenta, tus favoritos y, si las activas, tus alertas por correo o Telegram.</dd>
+                <dt>Legitimación</dt><dd>Prestarte el servicio que solicitas al crear la cuenta.</dd>
+                <dt>Destinatarios</dt><dd>Proveedores que nos dan el servicio (Netlify, Supabase, Google, Cloudflare), con garantías para las transferencias a EE. UU. No vendemos tus datos.</dd>
+                <dt>Derechos</dt><dd>Acceder, rectificar, borrar tu cuenta y demás derechos, desde tu Perfil o escribiendo a axionlabscreate@gmail.com.</dd>
+                <dt>Más información</dt><dd><a href="/legal.html#privacidad">Política de privacidad</a>.</dd>
+            </dl>
+        </details>
     </div>
 
-    <script src="/js/login.js?v=1"></script>
+    <footer class="legal-footer">
+        <a href="/info">Info</a>
+        <a href="/legal.html#aviso">Aviso legal</a>
+        <a href="/legal.html#privacidad">Privacidad</a>
+        <a href="/legal.html#cookies">Cookies</a>
+    </footer>
+
+    <script src="/js/login.js?v=3"></script>
 </body>
 </html>

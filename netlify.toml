@@ -1,6 +1,11 @@
 [build]
   publish = "."
 
+# Bundle each function with its dependencies inlined. telegram-webhook and maintenance-state are modern functions
+# (`export default`, in .js files: as .mjs their npm packages weren't shipped) that wrap CommonJS code in netlify/shared.
+[functions]
+  node_bundler = "esbuild"
+
 # The webcam proxy (netlify/edge-functions/proxy.ts) declares its own path and rate limit in code:
 # Netlify only reads rate limits from the function file, not from this file.
 

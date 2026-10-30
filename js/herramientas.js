@@ -5,10 +5,14 @@
 const SPOT_COLORS = {
     misericordia: '#2563eb', fuengirola: '#dc2626', malapesquera: '#16a34a',
     malagueta: '#9333ea', bajondillo: '#ea580c', nerja: '#0891b2',
-    alamos: '#db2777', cabopino: '#ca8a04', benajarafe: '#475569'
+    alamos: '#db2777', cabopino: '#ca8a04', benajarafe: '#475569',
+    torredelmar: '#0f766e'
 };
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']; // week starts on Monday
 const FIRST_HOUR = 7, LAST_HOUR = 19; // daylight hours used for the daily wave range
+// Energy sliders (spot filter and advanced alerts) step through these values (kJ) rather than evenly: most days stay
+// under 100 kJ and only storms go far above. Their value in herramientas.html is an index into this list.
+const ENERGY_STEPS = [0, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 150, 200, 300];
 
 const calBody = document.getElementById('calendar-body');
 const locale = 'es-ES';
@@ -16,10 +20,23 @@ const pad = n => String(n).padStart(2, '0');
 const dateKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
 
-// { allSpots: [{ id, name, color }], allDays: { 'YYYY-MM-DD': [{ id, min, max, period }] }, picked: Set|null,
-//   spots/days: what is shown right now, month: Date, selected }
+// { allSpots: [{ id, name, color }], allDays: { 'YYYY-MM-DD': [{ id, min, max, period, energyMin, energyMax }] },
+//   picked: Set|null, spots/days: what is shown right now, month: Date, selected, metric }
 let calState = null;
 const CAL_GUEST_DEFAULT = ['misericordia', 'malagueta', 'fuengirola']; // spots a visitor sees first
+
+// What the calendar shows for each day: wave size or wave energy. The choice is remembered in this browser.
+const CAL_METRICS = {
+    wave:   { label: 'Tamaño',  unit: 'm',  min: f => f.min,       max: f => f.max,       fmt: v => v.toFixed(1),
+              note: 'Altura máxima de ola entre las 07:00 y las 20:00.' },
+    energy: { label: 'Energía', unit: 'kJ', min: f => f.energyMin, max: f => f.energyMax, fmt: v => String(Math.round(v)),
+              note: 'Energía máxima de las olas entre las 07:00 y las 20:00 (sale de su altura y su periodo).' }
+};
+const CAL_METRIC_KEY = 'calMetric';
+function savedCalMetric() {
+    try { const m = localStorage.getItem(CAL_METRIC_KEY); if (CAL_METRICS[m]) return m; } catch (e) {}
+    return 'wave';
+}
 
 function message(html) {
     calBody.innerHTML = `<div class="cal-message">${html}</div>`;
@@ -73,7 +90,7 @@ async function loadCalendar() {
         return;
     }
 
-    // Daily wave range (daylight hours) per spot
+    // Daily wave range and energy range (daylight hours) per spot
     const days = {};
     spots.forEach((spot, i) => {
         const h = results[i].hourly;
@@ -83,9 +100,14 @@ async function loadCalendar() {
             const wave = h.wave_height[j];
             if (wave == null || hour < FIRST_HOUR || hour > LAST_HOUR) return;
             const day = time.slice(0, 10);
-            const b = byDay[day] || (byDay[day] = { min: wave, max: wave, period: 0 });
+            const b = byDay[day] || (byDay[day] = { min: wave, max: wave, period: 0, energyMin: null, energyMax: null });
             b.min = Math.min(b.min, wave);
             if (wave >= b.max) { b.max = wave; b.period = h.wave_period[j] || b.period; }
+            const energy = waveEnergy(wave, h.energy_period[j]);
+            if (energy != null) {
+                b.energyMin = b.energyMin == null ? energy : Math.min(b.energyMin, energy);
+                b.energyMax = b.energyMax == null ? energy : Math.max(b.energyMax, energy);
+            }
         });
         Object.entries(byDay).sort(([a], [b]) => a.localeCompare(b)).slice(0, FORECAST_DAYS)
             .forEach(([day, b]) => (days[day] || (days[day] = [])).push({ id: spot.id, ...b }));
@@ -94,7 +116,7 @@ async function loadCalendar() {
     const today = new Date();
     calState = {
         allSpots: spots, allDays: days, picked: session ? null : new Set(CAL_GUEST_DEFAULT),
-        month: new Date(today.getFullYear(), today.getMonth(), 1), selected: dateKey(today)
+        month: new Date(today.getFullYear(), today.getMonth(), 1), selected: dateKey(today), metric: savedCalMetric()
     };
     renderCalendar();
 }
@@ -140,6 +162,9 @@ function renderCalendar() {
     const spotById = Object.fromEntries(spots.map(s => [s.id, s]));
     const monthName = capitalize(month.toLocaleDateString(locale, { month: 'long', year: 'numeric' }));
     const arrow = d => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="${d}"></polyline></svg>`;
+    const metric = CAL_METRICS[calState.metric];
+    const metricBtns = Object.entries(CAL_METRICS).map(([key, mt]) =>
+        `<button type="button" data-metric="${key}"${key === calState.metric ? ' class="active"' : ''} aria-pressed="${key === calState.metric}">${mt.label}</button>`).join('');
 
     let cells = WEEKDAYS.map(d => `<div class="cal-dow">${d}</div>`).join('');
     for (let i = 0; i < firstWeekday; i++) cells += '<div class="cal-day empty"></div>';
@@ -153,7 +178,8 @@ function renderCalendar() {
         if (key === calState.selected && forecast.length) classes.push('selected');
         const pills = forecast.map(f => {
             const s = spotById[f.id];
-            return `<span class="cal-pill" style="--c:${s.color}" title="${s.name}: ${f.min.toFixed(1)}–${f.max.toFixed(1)} m">${f.max.toFixed(1)}<span class="unit">m</span></span>`;
+            const top = metric.max(f);
+            return `<span class="cal-pill" style="--c:${s.color}" title="${s.name}: ${calRange(f, metric)}">${top == null ? '—' : metric.fmt(top)}<span class="unit">${metric.unit}</span></span>`;
         }).join('');
         cells += forecast.length
             ? `<button type="button" class="${classes.join(' ')}" data-day="${key}"><span class="cal-num">${d}</span>${pills}</button>`
@@ -168,13 +194,19 @@ function renderCalendar() {
                 <button type="button" data-step="1" aria-label="Siguiente">${arrow('9 18 15 12 9 6')}</button>
             </div>
         </div>
+        <div class="cal-metric" role="group" aria-label="Qué mostrar">${metricBtns}</div>
         <div class="cal-legend">${spots.map(s => `<span><i style="--c:${s.color}"></i>${s.name}</span>`).join('')}</div>
         <div class="cal-grid">${cells}</div>
         <div id="cal-detail"></div>
-        <p class="cal-note">Altura máxima de ola entre las 07:00 y las 20:00. Pulsa un día para ver el detalle.</p>`;
+        <p class="cal-note">${metric.note} Pulsa un día para ver el detalle.</p>`;
 
     calBody.querySelectorAll('.cal-nav button').forEach(btn => btn.addEventListener('click', () => {
         calState.month = new Date(year, m + Number(btn.dataset.step), 1);
+        renderCalendar();
+    }));
+    calBody.querySelectorAll('.cal-metric button').forEach(btn => btn.addEventListener('click', () => {
+        calState.metric = btn.dataset.metric;
+        try { localStorage.setItem(CAL_METRIC_KEY, calState.metric); } catch (e) {}
         renderCalendar();
     }));
     calBody.querySelectorAll('.cal-day.has-data').forEach(cell => cell.addEventListener('click', () => {
@@ -185,19 +217,26 @@ function renderCalendar() {
     renderDetail();
 }
 
-// Full range and period for every favourite on the selected day
+// "0.4–1.1 m" or "3–61 kJ": the day's range of the metric shown
+function calRange(f, metric) {
+    const lo = metric.min(f), hi = metric.max(f);
+    return hi == null ? '—' : `${metric.fmt(lo)}–${metric.fmt(hi)} ${metric.unit}`;
+}
+
+// Full range (of the metric shown) and period for every favourite on the selected day
 function renderDetail() {
     const box = document.getElementById('cal-detail');
     const forecast = calState.days[calState.selected];
     if (!forecast) { box.innerHTML = ''; return; }
+    const metric = CAL_METRICS[calState.metric];
     const spotById = Object.fromEntries(calState.spots.map(s => [s.id, s]));
     const title = capitalize(new Date(calState.selected + 'T12:00:00').toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' }));
     box.innerHTML = `
         <div class="cal-detail">
             <h4>${title}</h4>
-            ${forecast.slice().sort((a, b) => b.max - a.max).map(f => {
+            ${forecast.slice().sort((a, b) => (metric.max(b) ?? -1) - (metric.max(a) ?? -1)).map(f => {
                 const s = spotById[f.id];
-                return `<div class="cal-detail-row"><i style="--c:${s.color}"></i><a href="/${s.id}">${s.name}</a><span>${f.min.toFixed(1)}–${f.max.toFixed(1)} m${f.period ? ` · ${Math.round(f.period)} s` : ''}</span></div>`;
+                return `<div class="cal-detail-row"><i style="--c:${s.color}"></i><a href="/${s.id}">${s.name}</a><span>${calRange(f, metric)}${f.period ? ` · ${Math.round(f.period)} s` : ''}</span></div>`;
             }).join('')}
         </div>`;
 }
@@ -220,6 +259,7 @@ const advCheckbox = document.getElementById('alert-advanced');
 const advSettings = document.getElementById('alert-advanced-settings');
 const advError = document.getElementById('alert-adv-error');
 const minPeriodInput = document.getElementById('alert-min-period');
+const minEnergyInput = document.getElementById('alert-min-energy'); // index into ENERGY_STEPS; saved as kJ
 const maxSizeInput = document.getElementById('alert-max-size');
 const maxWindInput = document.getElementById('alert-max-wind');
 const windTypeInputs = [...document.querySelectorAll('#alert-wind-types input')];
@@ -234,8 +274,9 @@ fromHourSelect.value = 7;
 toHourSelect.value = 20;
 
 function updateAdvLabels() {
-    const p = +minPeriodInput.value, s = +maxSizeInput.value, w = +maxWindInput.value;
+    const p = +minPeriodInput.value, s = +maxSizeInput.value, w = +maxWindInput.value, e = ENERGY_STEPS[+minEnergyInput.value];
     document.getElementById('alert-min-period-val').innerText = p === 0 ? 'Cualquiera' : `${p} s+`;
+    document.getElementById('alert-min-energy-val').innerText = e === 0 ? 'Cualquiera' : `${e} kJ+`;
     document.getElementById('alert-max-size-val').innerText = s >= MAX_SIZE_NO_LIMIT ? 'Sin límite' : `≤ ${s.toFixed(1)}m`;
     document.getElementById('alert-max-wind-val').innerText = w >= MAX_WIND_NO_LIMIT ? 'Sin límite' : `≤ ${w} km/h`;
 }
@@ -260,22 +301,107 @@ alertSize.addEventListener('input', () => {
     showAdvError();
 });
 advCheckbox.addEventListener('change', () => { showAdvSettings(advCheckbox.checked); showAdvError(); });
-[minPeriodInput, maxSizeInput, maxWindInput].forEach(el => el.addEventListener('input', () => { updateAdvLabels(); showAdvError(); }));
+[minPeriodInput, minEnergyInput, maxSizeInput, maxWindInput].forEach(el => el.addEventListener('input', () => { updateAdvLabels(); showAdvError(); }));
 [...windTypeInputs, fromHourSelect, toHourSelect].forEach(el => el.addEventListener('change', showAdvError));
 updateAdvLabels();
+
+// ── Where alerts arrive: email and/or Telegram ──
+// Linking runs on the server (netlify/functions/telegram-link.js + telegram-webhook.js); the linked chat shows up in
+// the session's app_metadata, which only the server can write.
+const chEmail = document.getElementById('alert-ch-email');
+const chTelegram = document.getElementById('alert-ch-telegram');
+const channelError = document.getElementById('alert-channel-error');
+const tgConnect = document.getElementById('tg-connect');
+const tgUnlink = document.getElementById('tg-unlink');
+const tgMsg = document.getElementById('tg-msg');
+let tgLinked = null;      // { name } once the chat is linked
+let tgPoll = null;
+
+function renderTelegram() {
+    const status = document.getElementById('tg-status');
+    status.textContent = tgLinked ? `Conectado${tgLinked.name ? ' (' + tgLinked.name + ')' : ''}` : 'No conectado';
+    status.classList.toggle('on', !!tgLinked);
+    document.getElementById('tg-howto').hidden = !!tgLinked;
+    document.getElementById('tg-stop').hidden = !tgLinked;
+    document.getElementById('tg-alert-hint').hidden = !!tgLinked;
+    tgConnect.hidden = !!tgLinked;
+    tgUnlink.hidden = !tgLinked;
+    chTelegram.disabled = !tgLinked;
+    if (!tgLinked) chTelegram.checked = false;
+}
+const tgFromUser = user => {
+    const app = (user && user.app_metadata) || {};
+    return app.telegram_chat_id ? { name: app.telegram_name || '' } : null;
+};
+async function tgCall(action) {
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    const res = await fetch('/.netlify/functions/telegram-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ action })
+    });
+    return { status: res.status, body: await res.json().catch(() => ({})) };
+}
+
+tgConnect.addEventListener('click', async () => {
+    // Open the tab right away (in the click) so the browser doesn't block it, then send it to the bot
+    const tab = window.open('', '_blank');
+    tgConnect.disabled = true;
+    tgMsg.textContent = '';
+    try {
+        const { status, body } = await tgCall('link');
+        if (status === 503) throw new Error('Las alertas por Telegram todavía no están disponibles. Vuelve a intentarlo más adelante.');
+        if (!body.url) throw new Error('No se ha podido preparar la conexión. Inténtalo de nuevo.');
+        if (tab) tab.location = body.url;
+        tgMsg.innerHTML = `Se ha abierto Telegram: pulsa <strong>Iniciar</strong> en el chat del bot. ¿No se ha abierto? <a href="${body.url}" target="_blank" rel="noopener">Abrir el bot</a>`;
+        // Wait for the bot to confirm (up to 10 min), refreshing the session to read the linked chat
+        clearInterval(tgPoll);
+        let tries = 0;
+        tgPoll = setInterval(async () => {
+            if (++tries > 200) { clearInterval(tgPoll); return; }
+            const { data } = await window.supabaseClient.auth.refreshSession().catch(() => ({ data: {} }));
+            const linked = tgFromUser(data && data.user);
+            if (!linked) return;
+            clearInterval(tgPoll);
+            tgLinked = linked;
+            renderTelegram();
+            chTelegram.checked = true;
+            tgMsg.textContent = '¡Telegram conectado! Ya puedes recibir las alertas por ahí.';
+        }, 3000);
+    } catch (err) {
+        if (tab) tab.close();
+        tgMsg.textContent = err.message;
+    }
+    tgConnect.disabled = false;
+});
+
+tgUnlink.addEventListener('click', async () => {
+    if (!confirm('¿Desconectar Telegram? Dejarás de recibir alertas por ahí.')) return;
+    const { status } = await tgCall('unlink');
+    if (status !== 200) { tgMsg.textContent = 'No se ha podido desconectar. Inténtalo de nuevo.'; return; }
+    await window.supabaseClient.auth.refreshSession().catch(() => {});
+    tgLinked = null;
+    renderTelegram();
+    tgMsg.textContent = 'Telegram desconectado.';
+});
+[chEmail, chTelegram].forEach(el => el.addEventListener('change', () => { channelError.style.display = 'none'; }));
 
 saveAlertsBtn.addEventListener('click', async () => {
     const invalid = advValidationError();
     if (invalid) { showAdvError(); return; }
+    if (alertCheckbox.checked && !chEmail.checked && !chTelegram.checked) { channelError.style.display = 'block'; return; }
     saveAlertsBtn.innerText = 'Guardando...';
     saveAlertsBtn.disabled = true;
     const { error } = await window.supabaseClient.auth.updateUser({
         data: {
             alerts_enabled: alertCheckbox.checked,
+            alert_email: chEmail.checked,
+            alert_telegram: chTelegram.checked,
             alert_days: parseInt(alertDays.value, 10),
             alert_size: parseFloat(alertSize.value),
             alerts_advanced: advCheckbox.checked,
             alert_min_period: +minPeriodInput.value,
+            alert_min_energy: ENERGY_STEPS[+minEnergyInput.value], // kJ, 0 = any
             alert_max_size: +maxSizeInput.value >= MAX_SIZE_NO_LIMIT ? null : +maxSizeInput.value,
             alert_max_wind: +maxWindInput.value >= MAX_WIND_NO_LIMIT ? null : +maxWindInput.value,
             alert_wind_types: windTypeInputs.filter(i => i.checked).map(i => i.value),
@@ -301,11 +427,23 @@ async function loadAlerts() {
     const { data: { session } } = await window.supabaseClient.auth.getSession();
     if (!session) {
         alertMessage.innerHTML = `Inicia sesión para activar las alertas de olas.<br><br><a href="/login">Iniciar Sesión</a>`;
+        // Bot de Telegram tool: the explanation and the bot link stay; connecting needs an account
+        document.getElementById('tg-login').hidden = false;
+        document.getElementById('tg-account').hidden = true;
+        document.getElementById('tg-status').hidden = true;
         return;
     }
-    const meta = session.user.user_metadata || {};
+    // The settings can also change from the Telegram bot (/alertas), which the browser's saved session doesn't know
+    // about: read the account fresh from the server, falling back to the session if that fails
+    const { data: fresh } = await window.supabaseClient.auth.getUser().catch(() => ({ data: null }));
+    const user = (fresh && fresh.user) || session.user;
+    const meta = user.user_metadata || {};
     alertCheckbox.checked = meta.alerts_enabled === true;
     showAlertSettings(alertCheckbox.checked);
+    tgLinked = tgFromUser(user);
+    renderTelegram();
+    chEmail.checked = meta.alert_email !== false; // older accounts never chose: email
+    chTelegram.checked = !!tgLinked && meta.alert_telegram === true;
     if (meta.alert_days) alertDays.value = meta.alert_days;
     if (meta.alert_size) {
         alertSize.value = meta.alert_size;
@@ -314,6 +452,7 @@ async function loadAlerts() {
     advCheckbox.checked = meta.alerts_advanced === true;
     showAdvSettings(advCheckbox.checked);
     if (typeof meta.alert_min_period === 'number') minPeriodInput.value = meta.alert_min_period;
+    if (typeof meta.alert_min_energy === 'number') minEnergyInput.value = Math.max(0, ENERGY_STEPS.indexOf(meta.alert_min_energy));
     maxSizeInput.value = typeof meta.alert_max_size === 'number' ? meta.alert_max_size : MAX_SIZE_NO_LIMIT;
     maxWindInput.value = typeof meta.alert_max_wind === 'number' ? meta.alert_max_wind : MAX_WIND_NO_LIMIT;
     if (Array.isArray(meta.alert_wind_types) && meta.alert_wind_types.length) {
@@ -328,14 +467,16 @@ async function loadAlerts() {
 onReady(() => loadAlerts().catch(err => console.error('Alerts error:', err)));
 
 // /herramientas#alertas (from the profile switch, or back from logging in) opens that tool and scrolls to it
-const TOOL_HASHES = { calendario: 'tool-calendar', filtrar: 'tool-filter', comparador: 'tool-compare', mapa: 'tool-map', alertas: 'tool-alerts' };
-const hashTool = document.getElementById(TOOL_HASHES[window.location.hash.slice(1)]);
-if (hashTool) {
-    onReady(() => {
-        hashTool.open = true;
-        hashTool.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+const TOOL_HASHES = { calendario: 'tool-calendar', filtrar: 'tool-filter', comparador: 'tool-compare', mapa: 'tool-map', alertas: 'tool-alerts', telegram: 'tool-telegram' };
+function openHashTool() {
+    const tool = document.getElementById(TOOL_HASHES[window.location.hash.slice(1)]);
+    if (!tool) return;
+    tool.open = true;
+    tool.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+onReady(openHashTool);
+// Links between tools on this page (e.g. Alertas → #telegram) open the other tool too
+window.addEventListener('hashchange', openHashTool);
 
 // ── Without an account: calendar and map work for everyone; these tools ask to log in ──
 const LOCKED_TOOLS = {
@@ -851,7 +992,7 @@ function popupContent(id) {
     } else {
         line('Sin datos');
     }
-    if (SPOTS[id].video) line('Webcam en directo', 'video');
+    if (SPOTS[id].cam) line('Webcam en directo', 'video');
     const link = document.createElement('a');
     link.href = '/' + id;
     link.textContent = 'Ver página del spot' + ' →';
@@ -1049,10 +1190,13 @@ window.addEventListener('resize', () => { if (mapState && mapTool.open) mapState
 // [first hour, last hour] of each time band; each hour covers hh:00–hh+1:00
 const FLT_BANDS = { early: [FIRST_HOUR, 9], midmorning: [10, 12], afternoon: [13, 16], evening: [17, LAST_HOUR] };
 const FLT_MAX_SIZE_NO_LIMIT = 4, FLT_MAX_WIND_NO_LIMIT = 50;
+// Energy sliders step through ENERGY_STEPS. Min slider (0–13 in herramientas.html): index 0 = any. Max slider (1–14):
+// the index past the last step = no limit.
 // Clean wind beats a bit more size when ranking (same weights as the email alerts)
 const FLT_WIND_FACTOR = { 'Glassy': 1.2, 'Off-shore': 1.15, 'Cross-shore': 0.95, 'On-shore': 0.75 };
 const FLT_CHECKS = [ // in the order a failing spot's reason is reported
     { key: 'size',   reason: 'Olas fuera del rango',      test: (h, f) => h.wave >= f.minSize && (f.maxSize >= FLT_MAX_SIZE_NO_LIMIT || h.wave <= f.maxSize) },
+    { key: 'energy', reason: 'Energía fuera del rango',   test: (h, f) => (h.energy || 0) >= f.minEnergy && (h.energy || 0) <= f.maxEnergy },
     { key: 'period', reason: 'Periodo demasiado corto',   test: (h, f) => (h.period || 0) >= f.minPeriod },
     { key: 'wind',   reason: 'Demasiado viento',          test: (h, f) => f.maxWind >= FLT_MAX_WIND_NO_LIMIT || h.windSpeed <= f.maxWind },
     { key: 'type',   reason: 'Tipo de viento no elegido', test: (h, f) => f.windTypes.includes(h.status) }
@@ -1065,6 +1209,8 @@ const fltCount = document.getElementById('flt-count');
 const fltInputs = {
     minSize: document.getElementById('flt-min-size'),
     maxSize: document.getElementById('flt-max-size'),
+    minEnergy: document.getElementById('flt-min-energy'),
+    maxEnergy: document.getElementById('flt-max-energy'),
     minPeriod: document.getElementById('flt-min-period'),
     maxWind: document.getElementById('flt-max-wind'),
     favs: document.getElementById('flt-favs'),
@@ -1099,7 +1245,7 @@ async function fetchFilterData() {
             const day = tm.slice(0, 10);
             dateSet.add(day);
             (days[day] || (days[day] = [])).push({
-                date: day, hour, wave, period: m.wave_period[j], energyPeriod: m.energy_period[j],
+                date: day, hour, wave, period: m.wave_period[j], energy: waveEnergy(wave, m.energy_period[j]),
                 windSpeed: wind.speed, status: getWindStatus(wind.speed, wind.dir, SPOTS[id].facing)
             });
         });
@@ -1112,6 +1258,8 @@ function fltFilters() {
     return {
         minSize: +fltInputs.minSize.value,
         maxSize: +fltInputs.maxSize.value,
+        minEnergy: ENERGY_STEPS[+fltInputs.minEnergy.value],
+        maxEnergy: ENERGY_STEPS[+fltInputs.maxEnergy.value] ?? Infinity, // past the last step = no limit
         minPeriod: +fltInputs.minPeriod.value,
         maxWind: +fltInputs.maxWind.value,
         windTypes: fltWindTypes.filter(i => i.checked).map(i => i.value),
@@ -1126,6 +1274,8 @@ function updateFltLabels() {
     const f = fltFilters();
     document.getElementById('flt-min-size-val').textContent = f.minSize === 0 ? 'Cualquiera' : `${f.minSize.toFixed(1)}m+`;
     document.getElementById('flt-max-size-val').textContent = f.maxSize >= FLT_MAX_SIZE_NO_LIMIT ? 'Sin límite' : `≤ ${f.maxSize.toFixed(1)}m`;
+    document.getElementById('flt-min-energy-val').textContent = f.minEnergy === 0 ? 'Cualquiera' : `${f.minEnergy} kJ+`;
+    document.getElementById('flt-max-energy-val').textContent = f.maxEnergy === Infinity ? 'Sin límite' : `≤ ${f.maxEnergy} kJ`;
     document.getElementById('flt-min-period-val').textContent = f.minPeriod === 0 ? 'Cualquiera' : `${f.minPeriod} s+`;
     document.getElementById('flt-max-wind-val').textContent = f.maxWind >= FLT_MAX_WIND_NO_LIMIT ? 'Sin límite' : `≤ ${f.maxWind} km/h`;
 }
@@ -1154,7 +1304,7 @@ const inBands = (hour, bands) => !bands.length || bands.some(b => hour >= FLT_BA
 // One spot over the chosen days and bands: { match, best, byDay: [[date, hours]], score, reason }
 function evaluateSpot(id, f) {
     if (f.favsOnly && !fltState.favs.includes(id)) return { match: false, reason: 'No es favorito' };
-    if (f.camsOnly && !SPOTS[id].video) return { match: false, reason: 'Sin webcam' };
+    if (f.camsOnly && !SPOTS[id].cam) return { match: false, reason: 'Sin webcam' };
     const hours = fltSelectedDates().flatMap(date => (fltState.data[id][date] || []).filter(h => inBands(h.hour, f.bands)));
     if (!hours.length) return { match: false, reason: 'Sin datos' };
     const matches = hours.filter(h => FLT_CHECKS.every(c => c.test(h, f)));
@@ -1184,6 +1334,7 @@ function matchText(byDay) {
 function renderFilter() {
     if (!fltState) return;
     updateFltLabels();
+    renderFltSummary();
     const f = fltFilters();
     fltDays.querySelectorAll('button').forEach(b => {
         const on = b.dataset.day === 'any' ? !fltState.days.size : fltState.days.has(+b.dataset.day);
@@ -1195,6 +1346,7 @@ function renderFilter() {
     const sorters = {
         score: (a, b) => b.score - a.score,
         wave: (a, b) => b.best.wave - a.best.wave,
+        energy: (a, b) => (b.best.energy || 0) - (a.best.energy || 0),
         wind: (a, b) => a.best.windSpeed - b.best.windSpeed,
         name: (a, b) => SPOTS[a.id].name.localeCompare(SPOTS[b.id].name)
     };
@@ -1205,15 +1357,14 @@ function renderFilter() {
     const cards = hits.map(({ id, best, byDay }) => {
         const s = SPOTS[id];
         const bin = binFor(best.wave);
-        const energy = waveEnergy(best.wave, best.energyPeriod);
         const tags = (fltState.favs.includes(id) ? `<span class="flt-tag">${monoIcon('star', 10, true)} Favorito</span>` : '')
-            + (s.video ? `<span class="flt-tag">${monoIcon('video', 11)} Webcam</span>` : '');
+            + (s.cam ? `<span class="flt-tag">${monoIcon('video', 11)} Webcam</span>` : '');
         return `
             <a class="flt-card" href="/${id}" style="--c:${bin ? bin.color : 'var(--wave-none)'}">
                 <div class="flt-size">${best.wave.toFixed(1)}m<small>${fltState.days.size === 1 ? '' : fltDayLabel(best.date) + ' '}${pad(best.hour)}:00</small></div>
                 <div class="flt-main">
                     <div class="flt-name">${s.name}${tags}</div>
-                    <div class="flt-line">${monoIcon('timer', 13)} ${best.period ? Math.round(best.period) + ' s' : '—'} · ${monoIcon('wind', 13)} ${Math.round(best.windSpeed)} km/h ${best.status}${energy != null ? ` · ${monoIcon('bolt', 13)} ${Math.round(energy)} kJ` : ''}</div>
+                    <div class="flt-line">${monoIcon('timer', 13)} ${best.period ? Math.round(best.period) + ' s' : '—'} · ${monoIcon('wind', 13)} ${Math.round(best.windSpeed)} km/h ${best.status}${best.energy != null ? ` · ${monoIcon('bolt', 13)} ${Math.round(best.energy)} kJ` : ''}</div>
                     <div class="flt-hours">${monoIcon('clock', 12)} ${matchText(byDay)}</div>
                 </div>
                 <svg class="flt-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -1237,6 +1388,8 @@ function renderFilter() {
 function resetFilter() {
     fltInputs.minSize.value = 0;
     fltInputs.maxSize.value = FLT_MAX_SIZE_NO_LIMIT;
+    fltInputs.minEnergy.value = 0;
+    fltInputs.maxEnergy.value = ENERGY_STEPS.length; // no limit
     fltInputs.minPeriod.value = 0;
     fltInputs.maxWind.value = FLT_MAX_WIND_NO_LIMIT;
     fltWindTypes.forEach(i => { i.checked = true; });
@@ -1247,6 +1400,84 @@ function resetFilter() {
     if (fltState) fltState.days = new Set([0]);
     renderFilter();
 }
+
+// ── Light filter UI: presets on top, the fine controls folded away, active filters as removable chips ──
+// Wave and wind conditions, as raw input values (slider positions); presets only touch these
+const FLT_CONDITIONS = ['minSize', 'maxSize', 'minEnergy', 'maxEnergy', 'minPeriod', 'maxWind', 'windTypes'];
+const fltNoFilter = () => ({ minSize: 0, maxSize: FLT_MAX_SIZE_NO_LIMIT, minEnergy: 0, maxEnergy: ENERGY_STEPS.length,
+    minPeriod: 0, maxWind: FLT_MAX_WIND_NO_LIMIT, windTypes: fltWindTypes.map(i => i.value) });
+// Each preset lists what it changes; every other condition goes back to "no filter" (minEnergy is an ENERGY_STEPS index)
+const FLT_PRESETS = {
+    any:      {},
+    beginner: { minSize: 0.3, maxSize: 1, maxWind: 20 },
+    surf:     { minSize: 0.6, maxWind: 25 },
+    good:     { minSize: 1, minPeriod: 5, minEnergy: ENERGY_STEPS.indexOf(40), windTypes: ['Glassy', 'Off-shore', 'Cross-shore'] }
+};
+const FLT_WIND_NAMES = { 'Glassy': 'sin viento', 'Off-shore': 'terral', 'Cross-shore': 'cruzado', 'On-shore': 'de mar' };
+const FLT_BAND_NAMES = { early: 'Primera hora', midmorning: 'Media mañana', afternoon: 'Tarde', evening: 'Última hora' };
+
+function readFltConditions() {
+    const v = {};
+    FLT_CONDITIONS.forEach(k => { if (k !== 'windTypes') v[k] = +fltInputs[k].value; });
+    v.windTypes = fltWindTypes.filter(i => i.checked).map(i => i.value);
+    return v;
+}
+function writeFltConditions(v) {
+    FLT_CONDITIONS.forEach(k => { if (k !== 'windTypes') fltInputs[k].value = v[k]; });
+    fltWindTypes.forEach(i => { i.checked = v.windTypes.includes(i.value); });
+}
+const sameCondition = (a, b) => (Array.isArray(a) ? [...a].sort().join() === [...b].sort().join() : a === b);
+
+// The active filters, each with a label and how to undo it
+function fltActiveFilters() {
+    const v = readFltConditions(), none = fltNoFilter(), list = [];
+    const undo = keys => () => { const cur = readFltConditions(); keys.forEach(k => { cur[k] = none[k]; }); writeFltConditions(cur); };
+    if (v.minSize > none.minSize) list.push({ text: `Olas ≥ ${v.minSize.toFixed(1)} m`, undo: undo(['minSize']) });
+    if (v.maxSize < none.maxSize) list.push({ text: `Olas ≤ ${v.maxSize.toFixed(1)} m`, undo: undo(['maxSize']) });
+    if (v.minEnergy > 0) list.push({ text: `Energía ≥ ${ENERGY_STEPS[v.minEnergy]} kJ`, undo: undo(['minEnergy']) });
+    if (v.maxEnergy < none.maxEnergy) list.push({ text: `Energía ≤ ${ENERGY_STEPS[v.maxEnergy]} kJ`, undo: undo(['maxEnergy']) });
+    if (v.minPeriod > 0) list.push({ text: `Periodo ≥ ${v.minPeriod} s`, undo: undo(['minPeriod']) });
+    if (v.maxWind < none.maxWind) list.push({ text: `Viento ≤ ${v.maxWind} km/h`, undo: undo(['maxWind']) });
+    if (!sameCondition(v.windTypes, none.windTypes)) {
+        list.push({ text: `Viento: ${v.windTypes.map(t => FLT_WIND_NAMES[t]).join(', ') || 'ninguno'}`, undo: undo(['windTypes']) });
+    }
+    const bands = fltBands.filter(i => i.checked && i.value !== 'any').map(i => i.value);
+    if (bands.length) list.push({ text: bands.map(b => FLT_BAND_NAMES[b]).join(', '), undo: () => fltBands.forEach(i => { i.checked = i.value === 'any'; }) });
+    if (fltInputs.favs.checked) list.push({ text: 'Solo favoritos', undo: () => { fltInputs.favs.checked = false; } });
+    if (fltInputs.cams.checked) list.push({ text: 'Solo con webcam', undo: () => { fltInputs.cams.checked = false; } });
+    return list;
+}
+
+function renderFltSummary() {
+    const v = readFltConditions();
+    const preset = Object.keys(FLT_PRESETS).find(p => {
+        const target = { ...fltNoFilter(), ...FLT_PRESETS[p] };
+        return FLT_CONDITIONS.every(k => sameCondition(v[k], target[k]));
+    });
+    document.querySelectorAll('#flt-presets button').forEach(b => {
+        b.classList.toggle('active', b.dataset.preset === preset);
+        b.setAttribute('aria-pressed', b.dataset.preset === preset);
+    });
+    const active = fltActiveFilters();
+    const badge = document.getElementById('flt-badge');
+    badge.hidden = !active.length;
+    badge.textContent = active.length;
+    const box = document.getElementById('flt-active');
+    box.replaceChildren(...active.map(a => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.title = 'Quitar este filtro';
+        btn.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        btn.prepend(a.text);
+        btn.addEventListener('click', () => { a.undo(); renderFilter(); });
+        return btn;
+    }));
+}
+
+document.querySelectorAll('#flt-presets button').forEach(btn => btn.addEventListener('click', () => {
+    writeFltConditions({ ...fltNoFilter(), ...FLT_PRESETS[btn.dataset.preset] });
+    renderFilter();
+}));
 
 // "Cualquier hora" and the bands exclude each other; unticking every band goes back to any hour
 fltBands.forEach(input => input.addEventListener('change', () => {
@@ -1305,7 +1536,7 @@ async function initFilter() {
     renderFilter();
 }
 
-[fltInputs.minSize, fltInputs.maxSize, fltInputs.minPeriod, fltInputs.maxWind].forEach(el => el.addEventListener('input', renderFilter));
+[fltInputs.minSize, fltInputs.maxSize, fltInputs.minEnergy, fltInputs.maxEnergy, fltInputs.minPeriod, fltInputs.maxWind].forEach(el => el.addEventListener('input', renderFilter));
 [...fltWindTypes, ...fltBands, fltInputs.favs, fltInputs.cams, fltInputs.sort].forEach(el => el.addEventListener('change', renderFilter));
 document.getElementById('flt-reset').addEventListener('click', resetFilter);
 updateFltLabels();
