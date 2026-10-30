@@ -21,10 +21,11 @@ const SPOTS = {
                       camLink: 'https://www.andalucialive.com/2023/01/12/webcam-velez-malaga-1-malaga-playa-torre-del-mar/', camBy: 'Andalucía Live' },
 
     // ── Popular spots near Málaga (near: true): their own section in Webcams/Forecast, and "Solo en Málaga" in the
-    // spot filter leaves them out. cam 'external' = a cam we only link to (its owner shows it on their own site; we
-    // don't have permission to show its picture here), so the card is just a button to camLink.
+    // spot filter leaves them out. cam 'external' = a cam whose live video plays on its owner's site (camLink); camSnap
+    // = its latest snapshot through our /proxy (without it the card is just a button to camLink).
     'elpalmar':     { lat: 36.2253, lon: -6.0662, facing: 240, name: 'El Palmar — Vejer', loc: 'Vejer de la Frontera (Cádiz)', near: true,
-                      cam: 'external', camLink: 'https://www.escueladesurf9pies.com/es/webcam-el-palmar', camBy: '9 Pies Escuela de Surf' },
+                      cam: 'external', camSnap: '/proxy/9pies/snap/elpalmar.jpg',
+                      camLink: 'https://www.escueladesurf9pies.com/es/webcam-el-palmar', camBy: '9 Pies Escuela de Surf' },
     'puntadelrio':  { lat: 36.7219, lon: -3.5710, facing: 206, name: 'Punta del Río — Salobreña', loc: 'Salobreña (Granada)', near: true }
 };
 
@@ -160,11 +161,12 @@ function addCamStyles() {
 //  · Windy: latest photo straight from Windy (they take a photo every few minutes); the button opens the cam on
 //    Windy.com (photos + timelapse). Windy's terms ask for a visible credit and a link to the cam, hence `credit`.
 function camInfo(spot) {
-    //  · external: no picture (the owner only shows it on their site); the button opens the cam there
+    //  · external: latest snapshot through our /proxy if we have one (camSnap); the button opens the live cam on the
+    //    owner's site
     if (spot.cam === 'external') {
-        return { snap: null, page: spot.camLink, label: 'Ver en directo', badge: 'EN DIRECTO',
+        return { snap: spot.camSnap || null, page: spot.camLink, label: 'Ver en directo', badge: 'EN DIRECTO',
             title: `Ver la webcam en directo en la web de ${spot.camBy} (se abre en una pestaña nueva)`,
-            note: `En la web de ${spot.camBy}`, credit: `Webcam: ${spot.camBy}`, creditLink: spot.camLink };
+            note: spot.camSnap ? null : `En la web de ${spot.camBy}`, credit: `Webcam: ${spot.camBy}`, creditLink: spot.camLink };
     }
     if (spot.cam.startsWith('windy:')) {
         const id = spot.cam.slice(6);
