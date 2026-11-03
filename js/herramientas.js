@@ -6,7 +6,7 @@ const SPOT_COLORS = {
     misericordia: '#2563eb', fuengirola: '#dc2626', malapesquera: '#16a34a',
     malagueta: '#9333ea', bajondillo: '#ea580c', nerja: '#0891b2',
     alamos: '#db2777', cabopino: '#ca8a04', benajarafe: '#475569',
-    torredelmar: '#0f766e', elpalmar: '#b45309', puntadelrio: '#7c3aed'
+    torredelmar: '#0f766e', elpalmar: '#b45309'
 };
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']; // week starts on Monday
 const FIRST_HOUR = 7, LAST_HOUR = 19; // daylight hours used for the daily wave range

@@ -25,12 +25,11 @@ const SPOTS = {
     // = its latest snapshot through our /proxy (without it the card is just a button to camLink).
     'elpalmar':     { lat: 36.2253, lon: -6.0662, facing: 240, name: 'El Palmar — Vejer', loc: 'Vejer de la Frontera (Cádiz)', near: true,
                       cam: 'external', camSnap: '/proxy/9pies/snap/elpalmar.jpg',
-                      camLink: 'https://www.escueladesurf9pies.com/es/webcam-el-palmar', camBy: '9 Pies Escuela de Surf' },
-    'puntadelrio':  { lat: 36.7219, lon: -3.5710, facing: 206, name: 'Punta del Río — Salobreña', loc: 'Salobreña (Granada)', near: true }
+                      camLink: 'https://www.escueladesurf9pies.com/es/webcam-el-palmar', camBy: '9 Pies Escuela de Surf' }
 };
 
 // Other URLs for a spot (path -> id), e.g. /fuente-de-la-salud for the spot saved as 'malapesquera'
-const SPOT_ALIASES = { 'fuente-de-la-salud': 'malapesquera', 'torre-del-mar': 'torredelmar', 'el-palmar': 'elpalmar', 'punta-del-rio': 'puntadelrio' };
+const SPOT_ALIASES = { 'fuente-de-la-salud': 'malapesquera', 'torre-del-mar': 'torredelmar', 'el-palmar': 'elpalmar' };
 
 // Speed in km/h, dir = where the wind blows FROM. `facing` = compass direction the beach looks out to sea
 // (SPOTS[id].facing). Wind from the land (within 45° of facing + 180) is off-shore; from the sea, on-shore.

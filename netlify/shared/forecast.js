@@ -14,8 +14,7 @@ const SPOTS = {
     'benajarafe':   { lat: 36.743, lon: -4.121, facing: 169, name: 'Benajarafe — Vélez-Málaga' },
     'torredelmar':  { lat: 36.738, lon: -4.094, facing: 131, name: 'Torre del Mar — Vélez-Málaga' },
     // Popular spots near Málaga (same list as SPOTS in common.js)
-    'elpalmar':     { lat: 36.2253, lon: -6.0662, facing: 240, name: 'El Palmar — Vejer' },
-    'puntadelrio':  { lat: 36.7219, lon: -3.5710, facing: 206, name: 'Punta del Río — Salobreña' }
+    'elpalmar':     { lat: 36.2253, lon: -6.0662, facing: 240, name: 'El Palmar — Vejer' }
 };
 
 const DIAS_ES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];

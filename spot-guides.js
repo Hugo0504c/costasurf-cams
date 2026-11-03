@@ -451,42 +451,6 @@ window.SPOT_GUIDES = {
             ],
             escuelas: `Hay muchas escuelas y surfcamps en El Palmar. Una de ellas, <a href="https://www.escueladesurf9pies.com/es/webcam-el-palmar" target="_blank" ${SCHOOL_LINK}>9 Pies Escuela de Surf</a>, es la que emite la webcam del spot.`,
             cercanos: []
-        },
-        puntadelrio: {
-            tipo: 'Beach Break / desembocadura', fondo: 'Arena oscura y grava', nivel: 'Iniciación / Intermedio', afluencia: 'Baja',
-            ola: 'Picos junto a la desembocadura del Guadalfeo', swell: 'Poniente (O–SO) y Levante (E–SE)', viento: 'Terral (N) o sin viento', temporada: 'Otoño a primavera',
-            desc: [
-                'El spot de surf más conocido de la costa de Granada (la Costa Tropical). Está en Salobreña, junto a la desembocadura del río Guadalfeo: una playa de 1,2 km de arena oscura y grava, apartada del núcleo urbano y con poca gente.',
-                'A diferencia de casi toda la costa de Málaga, funciona con Poniente y también con Levante, con olas de hasta metro y medio de forma habitual. Está a menos de 100 km de Málaga, al este de Nerja y Almuñécar.'
-            ],
-            condiciones: {
-                swell: 'Poniente del oeste-suroeste, que es cuando mejor rompe, y también Levante del este.',
-                viento: 'Terral (norte) o calma. Con el viento de mar soplando fuerte se pica.',
-                marea: 'Poco relevante (Mediterráneo).',
-                tamano: 'De 0,5 a 1,5 m.',
-                momento: 'Cuando entra un temporal de Poniente o de Levante y el viento todavía no ha subido, a primera hora.'
-            },
-            peligros: [
-                'Corriente en la desembocadura del río, más fuerte cuando el Guadalfeo baja con agua: no te dejes llevar hacia las rocas ni hacia la boca del río.',
-                'Grava y cantos en la orilla: cuidado al entrar y salir, mejor con escarpines.',
-                'Poca profundidad en algunas zonas: cae de plano.'
-            ],
-            acceso: [
-                'Desde Málaga, por la A-7 hacia Almería, salida de Salobreña (menos de 100 km).',
-                'La playa está a las afueras de Salobreña, junto a la desembocadura del Guadalfeo; se llega andando sin dificultad.',
-                'Aparcamiento en las inmediaciones de la playa.'
-            ],
-            servicios: [
-                'Pocos servicios en la propia playa: es una zona apartada.',
-                'Bares, restaurantes y tiendas en Salobreña, a pocos minutos.'
-            ],
-            consejos: [
-                'Si en Málaga no entra el Poniente, mira aquí: la costa de Granada lo recibe mejor.',
-                'Lleva escarpines y algo de beber: hay pocos servicios en la playa.',
-                'No tiene webcam: mira la previsión de olas y viento antes de salir.'
-            ],
-            escuelas: 'En la zona hay clubes y escuelas de surf de la Costa Tropical; pregunta en Salobreña o en Motril por alquiler de material y clases.',
-            cercanos: ['nerja']
         }
     }
 };

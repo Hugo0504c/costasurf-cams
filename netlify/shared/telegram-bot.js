@@ -43,7 +43,7 @@ const BACK_ROW = [{ text: '⬅ Panel', callback_data: 'p:home' }];
 const SPOT_COMMANDS = {
     misericordia: 'misericordia', fuengirola: 'fuengirola', malapesquera: 'fuentedelasalud', malagueta: 'malagueta',
     bajondillo: 'bajondillo', nerja: 'nerja', alamos: 'alamos', cabopino: 'cabopino', benajarafe: 'benajarafe',
-    torredelmar: 'torredelmar', elpalmar: 'elpalmar', puntadelrio: 'puntadelrio'
+    torredelmar: 'torredelmar', elpalmar: 'elpalmar'
 };
 const SPOT_BY_COMMAND = Object.fromEntries(Object.entries(SPOT_COMMANDS).map(([id, cmd]) => [cmd, id]));
 
