@@ -4,7 +4,7 @@ A website that brings together webcams and surf conditions for surfers in Málag
 
 Live demo:
 ```text
-[costasurfcams.netlify.app](https://costasurfcams.netlify.app)
+https://costasurfcams.netlify.app
 ```
 ![CostaSurf Cams home page](docs/screenshots/home.png)
 
