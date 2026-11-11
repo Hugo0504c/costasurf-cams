@@ -6,7 +6,6 @@ Live demo:
 ```text
 https://costasurfcams.netlify.app
 ```
-![CostaSurf Cams home page](docs/screenshots/home.png)
 
 ## Features
 
