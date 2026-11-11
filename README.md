@@ -2,14 +2,30 @@
 
 A website that brings together webcams and surf conditions for surfers in Málaga.
 
+**Live demo:** [costasurfcams.netlify.app](https://costasurfcams.netlify.app)
+
+![CostaSurf Cams home page](docs/screenshots/home.png)
+
 ## Features
 
-- Watch your favourite webcams on live
-- Find in a map your next surf spot
-- Recive notifications when there are waves in your spots
+- Watch your favorite webcams live
+- Find your next surf spot on a map
+- Receive notifications when there are waves at your spots
 - Filter between spots
 - Decide which wetsuit thickness to use
 - Save your favorite spots
+
+## Screenshots
+
+| Spot page with forecast | Tools |
+| --- | --- |
+| ![Spot page](docs/screenshots/spot.png) | ![Tools page](docs/screenshots/tools.png) |
+
+<p align="center">
+  <img src="docs/screenshots/mobile.png" alt="Mobile version" width="280">
+  <br>
+  <em>Mobile version</em>
+</p>
 
 ## Technologies used in the project
 
@@ -23,18 +39,13 @@ The project was developed using Claude Code as a programming assistant. I was re
 
 ## Future improvements
 
-- Injecting the webcams on the website
-- Buying comercial usage for a better forecast API
+- Embedding the webcams directly on the website
+- Getting a commercial license for a better forecast API
 
-## Learning Objectives
+## Learning objectives
 
 With this project I developed knowledge about:
 
 - HTML
 - Problem solving
-- Proxys
-
-## Check the website 
-```text
-https://costasurfcams.netlify.app
-````
+- Proxies
